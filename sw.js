@@ -1,38 +1,68 @@
-const CACHE = 'scout-ai-v2.0';
-const ASSETS = [
-  './',
+/*
+  TALLY ARS — Service Worker
+  ============================================================
+  Deliberately minimal. This app's entire value is live, real-time
+  Firebase sync — an aggressive offline-first cache would risk serving a
+  stale app shell or stale session state during a live event, which is a
+  worse failure mode than no caching at all.
+
+  What this service worker actually does:
+  - Satisfies the browser's installability requirement (a fetch handler
+    must exist for "Add to Home Screen" / install prompts to appear).
+  - Caches only the static app shell (HTML, manifest, icons) so the app
+    still opens if the network blips for a second — not so it can run
+    fully offline indefinitely.
+  - Always tries the network first for the HTML itself, falling back to
+    cache only on failure, so a host always gets the latest version of
+    the app when online rather than an old cached build.
+  - Never caches anything Firebase-related — that traffic is excluded
+    entirely, so live data is never served stale.
+*/
+
+const CACHE_NAME = 'tally-ars-shell-v1';
+const SHELL_ASSETS = [
   './index.html',
   './manifest.json',
-  './icons/icon-192x192.png',
-  './icons/icon-512x512.png',
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {})).then(() => self.skipWaiting())
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
-      .then(() => self.clients.claim())
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      )
+    )
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  // Don't cache API calls
-  if (e.request.url.includes('groq.com') || e.request.url.includes('googleapis.com/v1')) {
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Never intercept Firebase, Groq, Google Fonts, or any cross-origin
+  // request — only the app shell itself is ever cached. Live data must
+  // always go straight to the network.
+  if (url.origin !== self.location.origin) {
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
-      if (res.ok && e.request.method === 'GET') {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return res;
-    }).catch(() => caches.match('./index.html')))
+
+  // Network-first for the HTML shell: a host should always get the latest
+  // build when online. Cache is only a fallback for a momentary network
+  // blip, not a substitute for a fresh load.
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
