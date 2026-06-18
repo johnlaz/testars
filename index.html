@@ -4201,6 +4201,16 @@ document.getElementById('btn-start-session').addEventListener('click', async () 
         revealMode: revealMode,
         revealed: revealMode === 'live', // hidden-mode questions start unrevealed; live mode has nothing to hide
       };
+      // correctAnswerIndex and timerSeconds were set on the Build screen
+      // but previously never made it into this object — every question
+      // that went through "Start Session" silently lost its timer and
+      // correct-answer marking the moment the session was created, even
+      // though both were stored correctly on State.questionBank right up
+      // until this point. Questions added live mid-session (a separate
+      // code path) never had this gap, which is why the feature could
+      // look broken in one flow and fine in the other.
+      if (typeof q.correctAnswerIndex === 'number') questionsObj[qid].correctAnswerIndex = q.correctAnswerIndex;
+      if (typeof q.timerSeconds === 'number') questionsObj[qid].timerSeconds = q.timerSeconds;
     }
   });
 
@@ -4913,9 +4923,13 @@ function runRerunSession() {
   // rather than from Firebase (which no longer has this session — it was
   // deleted the moment the session ended). Strips vote data, status, and
   // timestamps, since those belong to the session that just finished, not
-  // to a fresh deck about to be reused. Order is preserved using each
-  // item's original createdAt, since Firebase objects don't guarantee key
-  // order the way an array does.
+  // to a fresh deck about to be reused. correctAnswerIndex and
+  // timerSeconds are deck-authoring settings, not session state, so they
+  // carry over just like revealMode does — they were previously dropped
+  // here, which silently turned trivia/timed questions back into plain
+  // polls on every rerun. Order is preserved using each item's original
+  // createdAt, since Firebase objects don't guarantee key order the way
+  // an array does.
   if (!State.lastExport || !State.lastExport.session) {
     appAlert('No previous session data available to reload.', { title: 'Nothing to reload' });
     return;
@@ -4928,7 +4942,10 @@ function runRerunSession() {
     if (q.type === 'slide') {
       return { type: 'slide', slide: q.slide };
     }
-    return { type: 'poll', text: q.text, options: q.options, revealMode: q.revealMode || 'live' };
+    const item = { type: 'poll', text: q.text, options: q.options, revealMode: q.revealMode || 'live' };
+    if (typeof q.correctAnswerIndex === 'number') item.correctAnswerIndex = q.correctAnswerIndex;
+    if (typeof q.timerSeconds === 'number') item.timerSeconds = q.timerSeconds;
+    return item;
   });
 
   State.sessionCode = null;
@@ -4996,9 +5013,16 @@ async function handleImportedSession(data) {
   // Preserve type/slide/revealMode on import — a previous version of this
   // stripped everything down to {text, options}, which silently dropped
   // any slide in the imported deck and reset every poll's reveal mode.
+  // correctAnswerIndex and timerSeconds are deck-authoring settings, not
+  // session state, so they're carried over too rather than stripped —
+  // they were previously dropped here as well, silently turning
+  // trivia/timed questions back into plain polls on import.
   State.questionBank = questions.map(q => {
     if (q.type === 'slide') return { type: 'slide', slide: q.slide };
-    return { type: 'poll', text: q.text, options: q.options, revealMode: q.revealMode || 'live' };
+    const item = { type: 'poll', text: q.text, options: q.options, revealMode: q.revealMode || 'live' };
+    if (typeof q.correctAnswerIndex === 'number') item.correctAnswerIndex = q.correctAnswerIndex;
+    if (typeof q.timerSeconds === 'number') item.timerSeconds = q.timerSeconds;
+    return item;
   });
 
   persistDraft();
