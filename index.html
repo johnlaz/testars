@@ -637,15 +637,15 @@ select.filter-select:focus { border-color: var(--accent); }
   }
   .modal {
     max-width: 100%;
-    /* Sheet height = full viewport minus the header clearance
-       and the bottom tab bar (72px). This ensures the top of
-       the sheet — where the header and tab strip live — is
-       always fully visible without scrolling. */
-    max-height: calc(100dvh - 100px);
+    /* Top clearance (100px header) + bottom tab bar (72px) + safe area.
+       The sheet never grows tall enough to hide the footer buttons
+       behind the bottom nav. */
+    max-height: calc(100dvh - 100px - 72px - env(safe-area-inset-bottom, 0px));
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     margin: 0;
     animation: sheetUpMobile var(--dur-med) var(--ease-ios);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    /* Keep sheet content above the bottom nav bar */
+    margin-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
   @keyframes sheetUpMobile {
     from { transform: translateY(100%); }
