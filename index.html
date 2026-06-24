@@ -1469,7 +1469,9 @@ select.filter-select:focus { border-color: var(--accent); }
   padding: 28px 24px;
   width: 100%;
   max-width: 540px;
-  max-height: 88vh;
+  /* Account for header (100px) + bottom tab bar (72px) */
+  max-height: calc(100dvh - 100px - 72px - env(safe-area-inset-bottom, 0px));
+  margin-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   overflow-y: auto;
   animation: cardPop var(--dur-med) var(--ease-ios);
 }
@@ -2269,24 +2271,32 @@ select.filter-select:focus { border-color: var(--accent); }
 <div class="modal-overlay" id="feedbackModal">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
-      <span class="modal-title">📝 NOTES & FEEDBACK</span>
+      <span class="modal-title">📝 Notes</span>
       <button class="modal-close" onclick="closeModal('feedbackModal')">✕</button>
     </div>
+
+    <!-- Tab strip — sits between header and scrolling body -->
+    <div style="display:flex;border-bottom:0.5px solid var(--separator);background:var(--bg-secondary);flex-shrink:0;overflow-x:auto;scrollbar-width:none">
+      <button class="stab active" id="fbTabAll"    onclick="switchFeedbackTab('all')"    style="flex:1;min-width:52px">All</button>
+      <button class="stab"        id="fbTabIdeas"  onclick="switchFeedbackTab('ideas')"  style="flex:1;min-width:52px">💡 Ideas</button>
+      <button class="stab"        id="fbTabIssues" onclick="switchFeedbackTab('issues')" style="flex:1;min-width:52px">🐛 Issues</button>
+      <button class="stab"        id="fbTabNotes"  onclick="switchFeedbackTab('notes')"  style="flex:1;min-width:52px">📌 Notes</button>
+    </div>
+
     <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button class="btn" id="fbTabIdeas" onclick="switchFeedbackTab('ideas')" style="flex:1">💡 IDEAS</button>
-        <button class="btn" id="fbTabIssues" onclick="switchFeedbackTab('issues')" style="flex:1">🐛 ISSUES</button>
-        <button class="btn" id="fbTabNotes" onclick="switchFeedbackTab('notes')" style="flex:1">📌 NOTES</button>
+      <!-- Add entry row — hidden on All tab -->
+      <div id="fbAddRow" style="display:flex;gap:8px;margin-bottom:14px">
+        <input class="form-input" id="fbInput" placeholder="Type and press Add or Enter..." style="flex:1;min-height:44px" onkeydown="if(event.key==='Enter')addFeedback()">
+        <button class="btn btn-primary" onclick="addFeedback()" style="flex-shrink:0;min-width:64px">Add</button>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <input class="form-input" id="fbInput" placeholder="Type and press ADD or Enter..." style="flex:1" onkeydown="if(event.key==='Enter')addFeedback()">
-        <button class="btn btn-primary" onclick="addFeedback()" style="flex-shrink:0">ADD</button>
-      </div>
-      <div id="fbList" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
-      <div style="margin-top:14px;display:flex;justify-content:flex-end;gap:8px">
-        <button class="btn btn-sm" onclick="exportFeedback()">⬇ EXPORT .TXT</button>
-        <button class="btn btn-danger btn-sm" onclick="clearFeedbackTab()">CLEAR TAB</button>
-      </div>
+      <div id="fbList" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+
+    <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
+      <button class="btn btn-sm" onclick="sendFeedbackEmail()" style="color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)">✉ Send to LAZLAB</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-sm" onclick="exportFeedback()">⬇ Export</button>
+      <button class="btn btn-danger btn-sm" id="fbClearBtn" onclick="clearFeedbackTab()">Clear tab</button>
     </div>
   </div>
 </div>
@@ -4178,7 +4188,16 @@ saveSettings = function() { _origSaveSettings(); updateApiStatus(); };
 //  FEEDBACK / NOTES SYSTEM
 // ══════════════════════════════════════════
 const FB_KEY = 'armory_feedback';
-let _fbTab   = 'ideas';
+let _fbTab   = 'all';
+
+const FB_TABS   = ['all', 'ideas', 'issues', 'notes'];
+const FB_LABELS = { all:'All', ideas:'💡 Ideas', issues:'🐛 Issues', notes:'📌 Notes' };
+const FB_COLORS = { ideas:'#4A9EFF', issues:'#FF6B6B', notes:'#D4AF37' };
+const FB_PLACEHOLDERS = {
+  ideas:  'e.g. Add bulk edit feature...',
+  issues: 'e.g. Export crashes on iOS...',
+  notes:  'e.g. Remember to back up weekly...',
+};
 
 function loadFeedback() {
   return JSON.parse(localStorage.getItem(FB_KEY) || '{"ideas":[],"issues":[],"notes":[]}');
@@ -4194,71 +4213,109 @@ function openFeedback() {
 
 function switchFeedbackTab(tab) {
   _fbTab = tab;
-  ['ideas','issues','notes'].forEach(t => {
-    const btn = document.getElementById('fbTab' + t.charAt(0).toUpperCase() + t.slice(1));
-    if (btn) btn.style.borderColor = t === tab ? 'var(--accent)' : '';
-    if (btn) btn.style.color       = t === tab ? 'var(--accent)' : '';
+  FB_TABS.forEach(t => {
+    const id  = 'fbTab' + t.charAt(0).toUpperCase() + t.slice(1);
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    if (t === tab) { btn.classList.add('active'); }
+    else           { btn.classList.remove('active'); }
   });
-  document.getElementById('fbInput').placeholder =
-    tab === 'ideas'  ? 'e.g. Add bulk edit feature...' :
-    tab === 'issues' ? 'e.g. Export crashes on iOS...' :
-                       'e.g. Remember to back up weekly...';
+
+  // Hide add row on All tab — can't add without a category
+  const addRow = document.getElementById('fbAddRow');
+  if (addRow) addRow.style.display = tab === 'all' ? 'none' : 'flex';
+
+  // Hide "Clear tab" on All tab
+  const clearBtn = document.getElementById('fbClearBtn');
+  if (clearBtn) clearBtn.style.display = tab === 'all' ? 'none' : '';
+
+  const input = document.getElementById('fbInput');
+  if (input) input.placeholder = FB_PLACEHOLDERS[tab] || 'Add entry...';
+
   renderFeedbackList();
 }
 
 function renderFeedbackList() {
-  const data  = loadFeedback();
-  const items = data[_fbTab] || [];
-  const list  = document.getElementById('fbList');
+  const data = loadFeedback();
+  const list = document.getElementById('fbList');
+  if (!list) return;
+
+  let items = [];
+
+  if (_fbTab === 'all') {
+    // Merge all tabs with a category tag, sorted newest first
+    ['ideas', 'issues', 'notes'].forEach(t => {
+      (data[t] || []).forEach((item, i) => items.push({ ...item, _tab: t, _idx: i }));
+    });
+    items.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } else {
+    items = (data[_fbTab] || []).map((item, i) => ({ ...item, _tab: _fbTab, _idx: i }));
+  }
+
   if (!items.length) {
-    list.innerHTML = `<div style="font-family:var(--font);font-size:11px;color:var(--text-dim);text-align:center;padding:20px">No ${_fbTab} logged yet</div>`;
+    const label = _fbTab === 'all' ? 'notes, ideas, or issues' : _fbTab;
+    list.innerHTML = `<div style="text-align:center;padding:28px 0;color:var(--text-quaternary);font-size:14px">No ${label} logged yet</div>`;
     return;
   }
-  list.innerHTML = items.map((item, i) => `
-    <div style="display:flex;align-items:flex-start;gap:8px;background:var(--bg-card);border:1px solid var(--border);border-radius:3px;padding:10px 12px">
-      <div style="flex:1">
-        <div style="font-size:13px;color:var(--text-primary);line-height:1.5">${item.text}</div>
-        <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);margin-top:3px">${item.date}</div>
-      </div>
-      <button onclick="deleteFeedbackItem(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;line-height:1;padding:0;flex-shrink:0" title="Delete">✕</button>
-    </div>`).join('');
+
+  list.innerHTML = items.map((item) => {
+    const color = FB_COLORS[item._tab] || 'var(--accent)';
+    const label = FB_LABELS[item._tab] || item._tab;
+    const tagHtml = _fbTab === 'all'
+      ? `<span style="font-size:10px;font-weight:600;color:${color};background:${color}22;padding:2px 8px;border-radius:20px;margin-left:6px">${label}</span>`
+      : '';
+    return `
+      <div style="display:flex;align-items:flex-start;gap:10px;background:var(--bg-tertiary);border:0.5px solid var(--separator-soft);border-radius:var(--radius-sm);padding:12px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px">
+            <span style="font-size:13px;color:var(--text-primary);line-height:1.5">${item.text}</span>
+            ${tagHtml}
+          </div>
+          <div style="font-size:11px;color:var(--text-quaternary)">${item.date}</div>
+        </div>
+        <button onclick="deleteFeedbackItem('${item._tab}',${item._idx})"
+          style="background:none;border:none;color:var(--text-quaternary);cursor:pointer;font-size:16px;line-height:1;padding:0;flex-shrink:0;min-width:24px;text-align:center"
+          title="Delete">✕</button>
+      </div>`;
+  }).join('');
 }
 
 function addFeedback() {
+  if (_fbTab === 'all') return; // shouldn't happen, row is hidden
   const input = document.getElementById('fbInput');
   const text  = input.value.trim();
-  if (!text) return;
-  const data  = loadFeedback();
+  if (!text) { showToast('Enter something first', 'error'); return; }
+  const data = loadFeedback();
   if (!data[_fbTab]) data[_fbTab] = [];
-  data[_fbTab].unshift({
-    text,
-    date: new Date().toLocaleString()
-  });
+  data[_fbTab].unshift({ text, date: new Date().toLocaleString() });
   saveFeedback(data);
   input.value = '';
   renderFeedbackList();
-  showToast('✓ Logged', 'success');
+  showToast('✓ Logged to ' + _fbTab, 'success');
 }
 
-function deleteFeedbackItem(index) {
+function deleteFeedbackItem(tab, index) {
   const data = loadFeedback();
-  data[_fbTab].splice(index, 1);
+  if (!data[tab]) return;
+  data[tab].splice(index, 1);
   saveFeedback(data);
   renderFeedbackList();
 }
 
 function clearFeedbackTab() {
+  if (_fbTab === 'all') return;
   if (!confirm(`Clear all ${_fbTab}?`)) return;
   const data = loadFeedback();
   data[_fbTab] = [];
   saveFeedback(data);
   renderFeedbackList();
+  showToast(`${_fbTab} cleared`, 'info');
 }
 
 function exportFeedback() {
-  const data = loadFeedback();
-  const lines = ['ARMORY — NOTES & FEEDBACK EXPORT', `Exported: ${new Date().toLocaleString()}`, ''];
-  ['ideas','issues','notes'].forEach(tab => {
+  const data  = loadFeedback();
+  const lines = ['ARMORY — Notes & Feedback Export', `Exported: ${new Date().toLocaleString()}`, ''];
+  ['ideas', 'issues', 'notes'].forEach(tab => {
     lines.push(`=== ${tab.toUpperCase()} ===`);
     if (!data[tab] || !data[tab].length) { lines.push('(none)', ''); return; }
     data[tab].forEach(item => lines.push(`• ${item.text}`, `  ${item.date}`, ''));
@@ -4266,11 +4323,31 @@ function exportFeedback() {
   const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `armory-notes-${new Date().toISOString().slice(0,10)}.txt`;
+  a.href = url; a.download = `armory-notes-${new Date().toISOString().slice(0,10)}.txt`;
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
   showToast('Notes exported', 'success');
+}
+
+function sendFeedbackEmail() {
+  const data    = loadFeedback();
+  const lines   = ['ARMORY Feedback from User', `Sent: ${new Date().toLocaleString()}`, ''];
+  let hasContent = false;
+  ['ideas', 'issues', 'notes'].forEach(tab => {
+    if (!data[tab] || !data[tab].length) return;
+    hasContent = true;
+    lines.push(`--- ${tab.toUpperCase()} ---`);
+    data[tab].forEach(item => lines.push(`• ${item.text}  [${item.date}]`));
+    lines.push('');
+  });
+  if (!hasContent) {
+    showToast('Nothing logged yet — add some notes first', 'error');
+    return;
+  }
+  const subject = encodeURIComponent('ARMORY App Feedback');
+  const body    = encodeURIComponent(lines.join('\n'));
+  const mailto  = `mailto:lazlab.io@gmail.com?subject=${subject}&body=${body}`;
+  window.location.href = mailto;
 }
 
 // ── Init on load ──
@@ -5327,7 +5404,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <div class="armory-ov" id="armory-story" onclick="if(event.target===this)closeArmoryOv('armory-story')">
-  <div class="armory-card" style="max-width:620px;max-height:88vh;overflow-y:auto">
+  <div class="armory-card" style="max-width:620px;max-height:calc(100dvh - 100px - 72px - env(safe-area-inset-bottom,0px));margin-bottom:calc(72px + env(safe-area-inset-bottom,0px));overflow-y:auto">
 
     
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px">
