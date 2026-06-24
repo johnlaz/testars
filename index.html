@@ -92,6 +92,76 @@
                   "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE THEME OVERRIDES
+   ═══════════════════════════════════════════════════════════ */
+html.theme-light {
+  --bg-primary:    #F2F2F7;
+  --bg-secondary:  #FFFFFF;
+  --bg-tertiary:   #E5E5EA;
+  --bg-elevated:   rgba(255,255,255,0.88);
+  --bg-overlay:    rgba(0,0,0,0.55);
+
+  --text-primary:   #1C1C1E;
+  --text-secondary: rgba(60,60,67,0.85);
+  --text-tertiary:  rgba(60,60,67,0.60);
+  --text-quaternary:rgba(60,60,67,0.30);
+  --text-dim:       rgba(60,60,67,0.30);
+
+  --separator:      rgba(60,60,67,0.29);
+  --separator-soft: rgba(60,60,67,0.18);
+  --fill-tertiary:  rgba(118,118,128,0.12);
+  --fill-secondary: rgba(118,118,128,0.20);
+
+  --bg-deep:   #F2F2F7;
+  --bg-card:   rgba(255,255,255,0.88);
+  --bg-panel:  rgba(255,255,255,0.95);
+  --bg-hover:  rgba(229,229,234,0.9);
+  --glass:     rgba(0,0,0,0.03);
+  --glass-border: rgba(0,0,0,0.08);
+  --border:    rgba(60,60,67,0.29);
+  --border-bright: rgba(60,60,67,0.45);
+}
+
+/* Light-mode specific surface overrides */
+html.theme-light header {
+  background: rgba(242,242,247,0.88);
+  border-bottom-color: rgba(60,60,67,0.18);
+}
+html.theme-light .nav-tabs {
+  background: rgba(242,242,247,0.92);
+  border-top-color: rgba(60,60,67,0.18);
+}
+html.theme-light .gun-card:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px var(--accent-border);
+}
+html.theme-light select.filter-select,
+html.theme-light .search-box {
+  background: #FFFFFF;
+  color: var(--text-primary);
+}
+html.theme-light .search-box::placeholder { color: var(--text-quaternary); }
+html.theme-light .armory-ov { background: rgba(0,0,0,0.5); }
+
+/* ── Theme Toggle Button ── */
+.theme-toggle-btn {
+  background: var(--fill-tertiary);
+  border: 0.5px solid var(--separator-soft);
+  color: var(--text-secondary);
+  font-size: 16px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--dur-fast) var(--ease-ios);
+  flex-shrink: 0;
+}
+.theme-toggle-btn:hover { background: var(--fill-secondary); color: var(--text-primary); }
+.theme-toggle-btn:active { transform: scale(0.93); }
+
 /* ── RESET ── */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 *:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1694,6 +1764,7 @@ select.filter-select:focus { border-color: var(--accent); }
       <span>FIREARMS INVENTORY SYSTEM</span>
     </div>
     <div class="header-actions">
+      <button class="theme-toggle-btn" id="themeToggleBtn" onclick="cycleTheme()" title="Toggle light / dark mode"></button>
       <button class="btn btn-icon" onclick="openSettings()" data-tip="Settings — API key, model, about">⚙</button>
       <button class="btn btn-icon" onclick="openCamera()" data-tip="AI Camera Scan — identify a firearm">📷</button>
       <button class="btn btn-primary" onclick="openAddModal()" data-tip="Manually add a firearm">+ ADD</button>
@@ -5382,8 +5453,86 @@ function obFinish() {
 function openArmoryOv(id)  { document.getElementById(id).classList.add('open'); }
 function closeArmoryOv(id) { document.getElementById(id).classList.remove('open'); }
 
+// ══════════════════════════════════════════
+//  THEME — system default, persisted toggle
+// ══════════════════════════════════════════
+const THEME_KEY = 'armory-theme'; // 'dark' | 'light' | null (system)
+
+function _systemPrefersDark() {
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function _effectiveTheme(stored) {
+  // stored is 'dark', 'light', or null (= follow system)
+  if (stored === 'dark')  return 'dark';
+  if (stored === 'light') return 'light';
+  return _systemPrefersDark() ? 'dark' : 'light';
+}
+
+function _applyTheme(effective) {
+  if (effective === 'light') {
+    document.documentElement.classList.add('theme-light');
+  } else {
+    document.documentElement.classList.remove('theme-light');
+  }
+}
+
+function _updateThemeBtn(stored) {
+  const btn = document.getElementById('themeToggleBtn');
+  if (!btn) return;
+  const effective = _effectiveTheme(stored);
+  // Icon: show what clicking WILL switch TO
+  if (stored === null) {
+    // following system
+    btn.textContent = effective === 'dark' ? '☀️' : '🌙';
+    btn.title = `Following system (${effective}). Click to lock to ${effective === 'dark' ? 'light' : 'dark'}.`;
+  } else if (stored === 'dark') {
+    btn.textContent = '☀️';
+    btn.title = 'Dark mode (locked). Click to switch to light.';
+  } else {
+    btn.textContent = '🌙';
+    btn.title = 'Light mode (locked). Click to switch to dark.';
+  }
+}
+
+function cycleTheme() {
+  const stored = localStorage.getItem(THEME_KEY) || null;
+  let next;
+  if (stored === null) {
+    // system → lock to opposite of current effective
+    next = _effectiveTheme(null) === 'dark' ? 'light' : 'dark';
+  } else if (stored === 'dark') {
+    next = 'light';
+  } else {
+    // light → back to system
+    next = null;
+  }
+  if (next === null) {
+    localStorage.removeItem(THEME_KEY);
+  } else {
+    localStorage.setItem(THEME_KEY, next);
+  }
+  _applyTheme(_effectiveTheme(next));
+  _updateThemeBtn(next);
+}
+
+function initTheme() {
+  const stored = localStorage.getItem(THEME_KEY) || null;
+  _applyTheme(_effectiveTheme(stored));
+  _updateThemeBtn(stored);
+  // Keep in sync if system theme changes while app is open
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const s = localStorage.getItem(THEME_KEY) || null;
+    if (s === null) {
+      _applyTheme(_effectiveTheme(null));
+      _updateThemeBtn(null);
+    }
+  });
+}
+
 // ── Init — runs after DOM is fully parsed (script is at bottom of file) ──
 document.addEventListener('DOMContentLoaded', function() {
+  initTheme();
   const sp = document.getElementById('armory-splash');
   if (sp) {
     // Returning user: auto-dismiss after 2s
