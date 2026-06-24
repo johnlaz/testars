@@ -627,20 +627,24 @@ select.filter-select:focus { border-color: var(--accent); }
 /* ── MOBILE: bottom sheet style ── */
 @media (max-width: 640px) {
   .modal-overlay {
-    /* Align sheet to bottom of screen */
     align-items: flex-end;
     padding: 0;
-    /* No outer scroll — the sheet handles it */
     overflow: hidden;
+    /* Push overlay down so it sits BELOW the sticky header.
+       100px covers the tallest header variant (2 rows + nav row).
+       The sheet then can never slide up behind it. */
+    padding-top: 100px;
   }
   .modal {
-    /* Full-width bottom sheet */
     max-width: 100%;
-    max-height: 92dvh;
+    /* Sheet height = full viewport minus the header clearance
+       and the bottom tab bar (72px). This ensures the top of
+       the sheet — where the header and tab strip live — is
+       always fully visible without scrolling. */
+    max-height: calc(100dvh - 100px);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     margin: 0;
     animation: sheetUpMobile var(--dur-med) var(--ease-ios);
-    /* Add safe area padding at bottom */
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @keyframes sheetUpMobile {
