@@ -1,68 +1,64 @@
-/*
-  TALLY ARS — Service Worker
-  ============================================================
-  Deliberately minimal. This app's entire value is live, real-time
-  Firebase sync — an aggressive offline-first cache would risk serving a
-  stale app shell or stale session state during a live event, which is a
-  worse failure mode than no caching at all.
+// ARMORY Service Worker — v3.0
+const CACHE_NAME = 'armory-v3.0';
 
-  What this service worker actually does:
-  - Satisfies the browser's installability requirement (a fetch handler
-    must exist for "Add to Home Screen" / install prompts to appear).
-  - Caches only the static app shell (HTML, manifest, icons) so the app
-    still opens if the network blips for a second — not so it can run
-    fully offline indefinitely.
-  - Always tries the network first for the HTML itself, falling back to
-    cache only on failure, so a host always gets the latest version of
-    the app when online rather than an old cached build.
-  - Never caches anything Firebase-related — that traffic is excluded
-    entirely, so live data is never served stale.
-*/
-
-const CACHE_NAME = 'tally-ars-shell-v1';
-const SHELL_ASSETS = [
-  './index.html',
+const PRECACHE_URLS = [
   './manifest.json',
+  'https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
 
-self.addEventListener('install', (event) => {
+// ── INSTALL ──
+self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PRECACHE_URLS).catch(() => {}))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+// ── ACTIVATE: wipe old caches ──
+self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+// ── FETCH ──
+self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Never intercept Firebase, Groq, Google Fonts, or any cross-origin
-  // request — only the app shell itself is ever cached. Live data must
-  // always go straight to the network.
-  if (url.origin !== self.location.origin) {
+  // Never intercept API calls
+  if (url.hostname === 'api.groq.com') {
+    event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network-first for the HTML shell: a host should always get the latest
-  // build when online. Cache is only a fallback for a momentary network
-  // blip, not a substitute for a fresh load.
+  // Navigation (HTML pages) — network first, fall back to cache
+  // This ensures index.html always loads fresh, preventing splash lock
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Everything else — cache first
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(response => {
+        if (!response || response.status !== 200 || event.request.method !== 'GET') return response;
+        caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
         return response;
-      })
-      .catch(() => caches.match(event.request))
+      }).catch(() => null);
+    })
   );
 });

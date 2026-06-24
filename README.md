@@ -1,54 +1,184 @@
-# Tally ARS
+<div align="center">
 
-**Live audience response, no app required.**
+# ⬡ ARMORY
+### *Firearms Inventory System*
 
-Tally turns any room into an interactive one. Attendees join in seconds by scanning a QR code or typing a five-character code — no app store, no download, no account. You run the show from a single dashboard: ask a question, watch the votes land in real time, and move to the next one with a tap or a press of the spacebar.
-
-Built for event hosts, trainers, and speakers who want a polished audience-response experience without renting clicker hardware or wrestling with a bloated enterprise tool.
-
----
-
-## Why Tally
-
-**Zero friction for attendees.** A phone and a browser is all it takes. No app installs, no sign-ups, no QR-scan-into-app-store dead ends.
-
-**A dashboard built for the person actually running the room.** A live preview shows you exactly what your audience sees, side by side with your controls — so you're never guessing what's on their screen. Keyboard shortcuts let you keep the room moving without breaking eye contact with your laptop.
-
-**Polls and slides, one deck.** Mix voting questions with full-screen images, audio clips, or plain announcement slides — build a complete session flow, not just a string of multiple-choice questions.
-
-**Built-in AI assistance.** Generate a batch of poll questions on any topic in seconds, or tighten the wording of a question you've already written — both powered by your own Groq API key, stored only on your device.
-
-**Your data, your control.** Every session can be exported to a portable file the moment it ends. Reload a past session's questions anytime, and optionally compare new results against the old ones side by side.
-
-**Installable, works like a native app.** Add Tally to your home screen on desktop or mobile for a full-screen, app-like experience — no browser chrome, no address bar, just the tool.
+**v3.0 · Professional Grade · Offline-First · AI-Powered**
 
 ---
 
-## How it works
+*Your collection deserves better than a spreadsheet.*
 
-1. **Build** — Assemble your deck: polls, slides, or both, in any order. Use Speed Card to generate a batch of questions on a topic, or write them by hand.
-2. **Start** — Starting a session generates a join code and QR. Attendees scan or type it on their own phone.
-3. **Run** — Open one item at a time. Votes tally live, with a real-time preview of the attendee view right next to your controls.
-4. **End & Export** — Ending a session produces a full report and exports your data, then clears it from the live system.
+</div>
 
 ---
 
-## Setting up AI features
+## What Is ARMORY?
 
-Speed Card (question generation) and Improve Wording (question polish) are both optional and require a free [Groq](https://groq.com) API key, added in **Settings → AI**. The key is stored only in your browser — it is never written into the app's files, never included in exports, and never sent anywhere except directly to Groq when you use one of these features.
+ARMORY is a full-featured, AI-powered firearms inventory system built as a Progressive Web App — installable on Android, iOS, Windows, and macOS without an app store. It runs entirely on your device. Your data never leaves your hands.
 
----
-
-## Installing as an app
-
-Tally is a Progressive Web App. Open it in a modern browser and look for an "Install" or "Add to Home Screen" option — on desktop Chrome/Edge, this appears in the address bar; on mobile, it's in the browser's share or menu options. Once installed, Tally launches in its own window with its own icon, just like a native app.
+Built by a collector, for collectors — ARMORY bridges the gap between the physical firearm in your safe and the professional digital record your insurance company needs on day one.
 
 ---
 
-## Notes for self-hosting
+## The Problem It Solves
 
-This package is a static site — `index.html`, `manifest.json`, `sw.js`, and the `icons/` folder all need to be deployed together, served from the same origin (GitHub Pages, Netlify, or any static host all work). Live sync runs on Firebase Realtime Database; the project's connection details live inside `index.html` and are safe to expose publicly, since access is controlled by database rules rather than by hiding the configuration.
+Most collectors reach what I call the **Excel Plateau** — a half-finished spreadsheet that's tedious to maintain and offers zero peace of mind. Every new acquisition brings the same questions:
+
+- *Do I have the serial number recorded correctly?*
+- *What's this collection actually worth right now?*
+- *If something happened today, would my documentation hold up?*
+
+ARMORY answers all three. Immediately.
 
 ---
 
-*Tally ARS — a LAZLAB Creations project.*
+## Core Features
+
+### 📸 One-Scan Intake
+Point your camera at any firearm or its markings. The AI identifies the make, model, caliber, and technical specifications automatically — no typing required. Add a new piece to your vault in under 60 seconds.
+
+### 🤖 The Intelligence Layer
+Powered by Groq's large language model API, ARMORY generates rich AI descriptions and manufacturer histories for every firearm in your vault. A serial number becomes a story. Specs fill themselves in. The intelligence layer runs on demand — tap **AI UPDATE SPECS** in any detail view and watch it work.
+
+### 📋 Professional Spec Sheets
+Every firearm gets a complete, structured record:
+
+| Field | Field | Field |
+|-------|-------|-------|
+| Make & Model | Caliber | Action Type |
+| Barrel Length | Overall Length | Weight |
+| Capacity | Finish | Year of Manufacture |
+| Condition | MSRP / Est. Value | Purchase Date |
+| Storage Location | Notes | Serial Number |
+
+### 📷 Photo Gallery
+Each firearm supports a **hero photo** plus an **unlimited gallery** of additional images — markings, accessories, modifications, condition documentation. Tap any thumbnail for a fullscreen lightbox viewer with swipe navigation.
+
+### 💰 Live Vault Dashboard
+The header displays your vault at a glance, always up to date:
+
+- **Firearm count** — total pieces in inventory
+- **Vault Value** — running MSRP / estimated total across all firearms
+- **Rounds Fired** — total rounds logged across your entire collection, tap to filter
+
+### 🎯 Range Log
+Track every range session per firearm. Log rounds fired, view session history, and watch the vault-wide total update in real time. Filter your entire inventory to show only firearms with active range data.
+
+### 🔧 Maintenance Records
+Per-firearm service tracking with:
+- Last service date picker
+- 8-task maintenance checklist (clean barrel, lubricate, inspect feed, check headspace, and more)
+- Timestamped maintenance log with free-form notes
+- Full history preserved across sessions
+
+### ⚙️ Accessories Tracker
+12 standard accessory checkboxes plus a custom field per firearm — red dot, magnified scope, suppressor, bipod, sling, laser, trigger upgrade, and more.
+
+### 📄 Insurance-Ready Exports
+
+**Single Firearm Report** — open any detail view and tap **Insurance Export** to generate a print-ready HTML document with the firearm's photo, complete spec sheet, purchase date, estimated value, and a generation timestamp. Open in any browser, print to PDF.
+
+**Full Vault Report** — one tap generates a consolidated insurance document covering every firearm in your collection with a vault summary (total count, total estimated value) at the top.
+
+### 💾 Full Backup & Restore
+A single JSON export captures everything:
+- All firearms with full specifications
+- All photos (base64 embedded)
+- Range logs, maintenance records, accessories
+- AI descriptions
+- Your API key and preferences
+- Notes and feedback entries
+
+**Restore** on any device — choose Merge (upsert by serial number) or Replace All. Your vault travels with you.
+
+### 🔍 Search, Filter & Sort
+Find anything in your collection instantly:
+
+**Filters** — Type · Caliber · Storage Location · Rounds (active filter)
+
+**Sort options:**
+- Name A→Z / Z→A
+- Make A→Z
+- Value: High to Low / Low to High
+- Year: Newest / Oldest
+- Rounds: Most Fired
+- Purchased: Newest / Oldest
+
+### 🗂 Storage Location Tracking
+Assign every firearm to a named location — Safe A, Safe B, Vault, Case, Locker, Bedside, Range Bag, Vehicle — and filter your entire inventory by location in a single tap.
+
+---
+
+## The AI Stack
+
+ARMORY connects to [Groq](https://console.groq.com) — the fastest AI inference platform available — using a **free API key** that takes about 60 seconds to obtain.
+
+| Capability | Model Used |
+|-----------|-----------|
+| Spec research & AI descriptions | `llama-3.3-70b-versatile` |
+| Camera identification & vision | `meta-llama/llama-4-scout-17b` |
+| Fast fallback (rate limit) | `llama-3.1-8b-instant` |
+
+The app auto-falls back to a faster model if rate limits are hit, and all AI features degrade gracefully without a key — the rest of the app works fully offline.
+
+---
+
+## Privacy Architecture
+
+ARMORY is built on a **local-first, zero-trust** architecture:
+
+- ✅ All firearms data stored in browser localStorage — never on a server
+- ✅ Photos stored as base64 on your device
+- ✅ API key stored locally — sent only to Groq's API, never to any other endpoint
+- ✅ No accounts, no sign-up, no cloud sync
+- ✅ Works fully offline after first load
+- ✅ Service worker caches all assets for offline use
+- ✅ Full JSON export gives you 100% data portability at any time
+
+---
+
+## The Vault Experience
+
+ARMORY presents your collection through three optimized views:
+
+**Grid View** — Full photo cards with brand, model, caliber chips, and value at a glance
+
+**Small Tiles** — Maximum density — see your entire collection at once
+
+**List View** — Horizontal rows with inline spec chips — optimized for long collections
+
+The glassmorphism dark UI — gold accent system, frosted glass cards, neon glow on primary actions — makes every interaction feel premium. Your vault looks as good as it performs.
+
+---
+
+## Feature Summary
+
+| Category | Features |
+|----------|----------|
+| **Intake** | Manual entry · AI camera scan · AI spec fill · Manufacturer logo picker |
+| **Records** | Full spec sheets · Photo gallery · Notes · Purchase date · Storage location |
+| **Operations** | Range log · Maintenance records · Accessories tracker |
+| **Intelligence** | AI descriptions · Spec research · Camera identification |
+| **Vault** | Live value total · Round count · Firearm count · Multi-sort · Multi-filter |
+| **Exports** | Single insurance PDF · Full vault PDF · Excel · CSV · JSON backup |
+| **Security** | Local-only storage · No accounts · Offline-capable · Full data export |
+| **Platform** | PWA — Android · iOS · Windows · macOS · Desktop browser |
+
+---
+
+## About
+
+ARMORY was built by a collector who got tired of the Excel Plateau. What started as a personal utility — a way to bring order to a growing investment — became a platform built on two principles: **utility** and **privacy**.
+
+The technical rigor of a developer. The passion of a collector. The peace of mind of a professional.
+
+*Built on the Lazzaro Standard.*
+
+---
+
+<div align="center">
+
+**ARMORY v3.0** · © 2025 Lazzaro Standard · All data stays on your device
+
+</div>
