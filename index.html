@@ -136,7 +136,8 @@ html.theme-light .gun-card:hover {
   box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px var(--accent-border);
 }
 html.theme-light select.filter-select,
-html.theme-light .search-box {
+html.theme-light .search-box,
+html.theme-light .search-trigger {
   background: #FFFFFF;
   color: var(--text-primary);
 }
@@ -317,8 +318,18 @@ header {
 .nav-tab.active::before {
   transform: scale(1.1);
 }
-/* Hide detail tab by default — JS handles display:none */
-#detailTab { display: none; }
+/* Detail tab hidden by default — visibility keeps layout stable (3 tabs always occupy space) */
+#detailTab {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-ios);
+}
+#detailTab.tab-visible {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+}
 
 /* ═══════════════════════════════════════════════════════════
    MAIN CONTENT AREA
@@ -390,16 +401,66 @@ header {
    ═══════════════════════════════════════════════════════════ */
 .toolbar {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
   margin-bottom: 20px;
 }
-.search-box {
-  flex: 1;
-  min-width: 200px;
+.toolbar-row1 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.toolbar-row2 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Search trigger button */
+.search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: var(--bg-secondary);
   border: 0.5px solid var(--separator-soft);
+  color: var(--text-secondary);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 0 14px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-ios);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.search-trigger:hover { background: var(--fill-secondary); color: var(--text-primary); }
+.search-trigger:active { transform: scale(0.97); }
+.search-trigger.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.search-trigger-icon { font-size: 18px; line-height: 1; }
+
+/* Search expand container */
+.search-expand {
+  display: none;
+  flex: 1;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.search-expand.open { display: flex; }
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--accent);
   color: var(--text-primary);
   font-family: var(--font);
   font-size: 15px;
@@ -408,13 +469,48 @@ header {
   outline: none;
   min-height: 44px;
   transition: all var(--dur-fast) var(--ease-ios);
-}
-.search-box:focus {
-  border-color: var(--accent);
   background: rgba(212,175,55,0.04);
   box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
 }
 .search-box::placeholder { color: var(--text-quaternary); }
+
+/* Close button inside search */
+.search-close-btn {
+  background: var(--fill-tertiary);
+  border: 0.5px solid var(--separator-soft);
+  color: var(--text-tertiary);
+  font-size: 15px;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--dur-fast) var(--ease-ios);
+}
+.search-close-btn:hover { background: var(--fill-secondary); color: var(--text-primary); }
+
+/* Clear filters button */
+.clear-filters-btn {
+  background: rgba(255,69,58,0.10);
+  border: 0.5px solid rgba(255,69,58,0.35);
+  color: var(--red);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 0 12px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--dur-fast) var(--ease-ios);
+  flex-shrink: 0;
+}
+.clear-filters-btn:hover { background: rgba(255,69,58,0.20); }
+.clear-filters-btn:active { transform: scale(0.97); }
 
 select.filter-select {
   background: var(--bg-secondary);
@@ -1785,7 +1881,7 @@ select.filter-select:focus { border-color: var(--accent); }
 <div class="nav-tabs">
   <div class="nav-tab active" data-screen="inventory" onclick="switchScreen('inventory',this)">Vault</div>
   <div class="nav-tab" data-screen="sold" id="soldTab" onclick="switchScreen('sold',this)">Sold</div>
-  <div class="nav-tab" data-screen="detail-screen" id="detailTab" style="display:none" onclick="switchScreen('detail-screen',this)">Detail</div>
+  <div class="nav-tab" data-screen="detail-screen" id="detailTab" onclick="switchScreen('detail-screen',this)">Detail</div>
 </div>
 
 <div class="main">
@@ -1793,38 +1889,52 @@ select.filter-select:focus { border-color: var(--accent); }
   
   <div class="screen active" id="screen-inventory">
     <div class="toolbar">
-      <input type="text" class="search-box" placeholder="⌕  SEARCH BY NAME, BRAND, CALIBER, SERIAL..." oninput="renderInventory()" id="searchInput">
-      <select class="filter-select" id="typeFilter" onchange="renderInventory()">
-        <option value="">ALL TYPES</option>
-        <option>PISTOL</option><option>RIFLE</option><option>SHOTGUN</option>
-        <option>REVOLVER</option><option>CARBINE</option><option>OTHER</option>
-      </select>
-      <select class="filter-select" id="caliberFilter" onchange="renderInventory()">
-        <option value="">ALL CALIBERS</option>
-      </select>
-      <select class="filter-select" id="storageFilter" onchange="renderInventory()">
-        <option value="">ALL LOCATIONS</option>
-        <option>Safe A</option><option>Safe B</option><option>Vault</option>
-        <option>Case</option><option>Locker</option><option>Bedside</option>
-        <option>Range Bag</option><option>Vehicle</option><option>Other</option>
-      </select>
-      <select class="filter-select" id="sortSelect" onchange="renderInventory()">
-        <option value="default">SORT: DEFAULT</option>
-        <option value="name-az">NAME A→Z</option>
-        <option value="name-za">NAME Z→A</option>
-        <option value="make-az">MAKE A→Z</option>
-        <option value="value-hi">VALUE: HIGH→LOW</option>
-        <option value="value-lo">VALUE: LOW→HIGH</option>
-        <option value="year-new">YEAR: NEWEST</option>
-        <option value="year-old">YEAR: OLDEST</option>
-        <option value="rounds-hi">ROUNDS: MOST</option>
-        <option value="purchase-new">PURCHASED: NEWEST</option>
-        <option value="purchase-old">PURCHASED: OLDEST</option>
-      </select>
-      <div class="view-toggle">
-        <button class="view-btn active" id="vbtn-grid" onclick="setView('grid')" title="Card View">⊞</button>
-        <button class="view-btn" id="vbtn-small" onclick="setView('small')" title="Small Tiles">⊟</button>
-        <button class="view-btn" id="vbtn-list" onclick="setView('list')" title="List View">≡</button>
+      <!-- Row 1: Search + View Toggle -->
+      <div class="toolbar-row1">
+        <button class="search-trigger" id="searchTrigger" onclick="toggleSearchBox()" title="Search">
+          <span class="search-trigger-icon">⌕</span>
+          <span class="search-trigger-label">SEARCH</span>
+        </button>
+        <div class="search-expand" id="searchExpand">
+          <input type="text" class="search-box" placeholder="Name, brand, caliber, serial…" oninput="renderInventory(); updateClearBtn()" id="searchInput">
+          <button class="search-close-btn" onclick="closeSearchBox()" title="Close">✕</button>
+        </div>
+        <div class="view-toggle" style="margin-left:auto;flex-shrink:0">
+          <button class="view-btn active" id="vbtn-grid" onclick="setView('grid')" title="Card View">⊞</button>
+          <button class="view-btn" id="vbtn-small" onclick="setView('small')" title="Small Tiles">⊟</button>
+          <button class="view-btn" id="vbtn-list" onclick="setView('list')" title="List View">≡</button>
+        </div>
+      </div>
+      <!-- Row 2: Filters + Clear -->
+      <div class="toolbar-row2">
+        <select class="filter-select" id="typeFilter" onchange="renderInventory(); updateClearBtn()">
+          <option value="">ALL TYPES</option>
+          <option>PISTOL</option><option>RIFLE</option><option>SHOTGUN</option>
+          <option>REVOLVER</option><option>CARBINE</option><option>OTHER</option>
+        </select>
+        <select class="filter-select" id="caliberFilter" onchange="renderInventory(); updateClearBtn()">
+          <option value="">ALL CALIBERS</option>
+        </select>
+        <select class="filter-select" id="storageFilter" onchange="renderInventory(); updateClearBtn()">
+          <option value="">ALL LOCATIONS</option>
+          <option>Safe A</option><option>Safe B</option><option>Vault</option>
+          <option>Case</option><option>Locker</option><option>Bedside</option>
+          <option>Range Bag</option><option>Vehicle</option><option>Other</option>
+        </select>
+        <select class="filter-select" id="sortSelect" onchange="renderInventory(); updateClearBtn()">
+          <option value="default">SORT: DEFAULT</option>
+          <option value="name-az">NAME A→Z</option>
+          <option value="name-za">NAME Z→A</option>
+          <option value="make-az">MAKE A→Z</option>
+          <option value="value-hi">VALUE: HIGH→LOW</option>
+          <option value="value-lo">VALUE: LOW→HIGH</option>
+          <option value="year-new">YEAR: NEWEST</option>
+          <option value="year-old">YEAR: OLDEST</option>
+          <option value="rounds-hi">ROUNDS: MOST</option>
+          <option value="purchase-new">PURCHASED: NEWEST</option>
+          <option value="purchase-old">PURCHASED: OLDEST</option>
+        </select>
+        <button class="clear-filters-btn" id="clearFiltersBtn" onclick="clearAllFilters()" style="display:none" title="Clear all filters">✕ CLEAR</button>
       </div>
     </div>
     <div class="inventory-grid" id="inventoryGrid"></div>
@@ -2695,6 +2805,64 @@ function setView(mode) {
   renderInventory();
 }
 
+// ── Search toggle ──
+function toggleSearchBox() {
+  const expand  = document.getElementById('searchExpand');
+  const trigger = document.getElementById('searchTrigger');
+  const isOpen  = expand.classList.contains('open');
+  if (isOpen) {
+    closeSearchBox();
+  } else {
+    expand.classList.add('open');
+    trigger.classList.add('active');
+    setTimeout(() => document.getElementById('searchInput').focus(), 50);
+  }
+}
+
+function closeSearchBox() {
+  const expand  = document.getElementById('searchExpand');
+  const trigger = document.getElementById('searchTrigger');
+  const input   = document.getElementById('searchInput');
+  expand.classList.remove('open');
+  trigger.classList.remove('active');
+  input.value = '';
+  renderInventory();
+  updateClearBtn();
+}
+
+// ── Clear all filters ──
+function updateClearBtn() {
+  const q     = (document.getElementById('searchInput').value || '').trim();
+  const typeF = document.getElementById('typeFilter').value;
+  const calF  = document.getElementById('caliberFilter').value;
+  const stF   = document.getElementById('storageFilter').value;
+  const sort  = document.getElementById('sortSelect').value;
+  const dirty = q || typeF || calF || stF || (sort && sort !== 'default');
+  const btn   = document.getElementById('clearFiltersBtn');
+  if (btn) btn.style.display = dirty ? 'flex' : 'none';
+}
+
+function clearAllFilters() {
+  const input = document.getElementById('searchInput');
+  if (input) input.value = '';
+  const typeF = document.getElementById('typeFilter');
+  if (typeF) typeF.value = '';
+  const calF = document.getElementById('caliberFilter');
+  if (calF) calF.value = '';
+  const stF = document.getElementById('storageFilter');
+  if (stF) stF.value = '';
+  const sort = document.getElementById('sortSelect');
+  if (sort) sort.value = 'default';
+  // Close search box if open
+  const expand = document.getElementById('searchExpand');
+  if (expand && expand.classList.contains('open')) {
+    expand.classList.remove('open');
+    document.getElementById('searchTrigger').classList.remove('active');
+  }
+  renderInventory();
+  updateClearBtn();
+}
+
 // ══════════════════════════════════════════
 //  RENDER INVENTORY
 // ══════════════════════════════════════════
@@ -2938,7 +3106,7 @@ function showDetail(id) {
 
   currentDetailId = id;
   const detailTab = document.getElementById('detailTab');
-  detailTab.style.display = 'block';
+  detailTab.classList.add('tab-visible');
   switchScreen('detail-screen', detailTab);
   updateDetailNav(id);
   if (!g.ai_description) fetchAIDescription(g);
@@ -3437,7 +3605,7 @@ function deleteFirearm(id) {
   if (!confirm('Delete this firearm from inventory?')) return;
   inventory = inventory.filter(x=>x.id!==id);
   save(); renderInventory();
-  document.getElementById('detailTab').style.display='none';
+  document.getElementById('detailTab').classList.remove('tab-visible');
   switchScreen('inventory', document.querySelector('[data-screen=inventory]'));
   showToast('Firearm removed', 'info');
 }
@@ -4681,7 +4849,7 @@ function confirmSell() {
   const soldTab = document.getElementById('soldTab');
   switchScreen('sold', soldTab);
   renderSold();
-  document.getElementById('detailTab').style.display = 'none';
+  document.getElementById('detailTab').classList.remove('tab-visible');
   showToast('✓ ' + (g.make || 'Firearm') + ' ' + (g.model || '') + ' archived to Sold', 'success');
 }
 
