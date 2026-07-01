@@ -397,6 +397,251 @@ header {
 .btn-icon:hover { background: var(--fill-secondary); }
 
 /* ═══════════════════════════════════════════════════════════
+   THEMED CONFIRM / ALERT MODAL
+   ═══════════════════════════════════════════════════════════ */
+#armoryConfirmOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-med) var(--ease-ios);
+}
+#armoryConfirmOverlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.armory-confirm-card {
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--separator);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 360px;
+  overflow: hidden;
+  transform: scale(0.92) translateY(12px);
+  transition: transform var(--dur-med) var(--ease-spring);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.55);
+}
+#armoryConfirmOverlay.open .armory-confirm-card {
+  transform: scale(1) translateY(0);
+}
+.armory-confirm-header {
+  padding: 24px 24px 0;
+  text-align: center;
+}
+.armory-confirm-icon {
+  font-size: 42px;
+  line-height: 1;
+  margin-bottom: 12px;
+}
+.armory-confirm-title {
+  font-family: var(--heading);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+  margin-bottom: 8px;
+}
+.armory-confirm-body {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  padding: 0 24px 20px;
+  text-align: center;
+}
+.armory-confirm-actions {
+  display: flex;
+  border-top: 0.5px solid var(--separator);
+}
+.armory-confirm-actions button {
+  flex: 1;
+  padding: 16px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-ios);
+  color: var(--text-secondary);
+}
+.armory-confirm-actions button:first-child {
+  border-right: 0.5px solid var(--separator);
+}
+.armory-confirm-actions button:hover { background: var(--fill-tertiary); }
+.armory-confirm-actions button.confirm-danger { color: var(--red); font-weight: 700; }
+.armory-confirm-actions button.confirm-primary { color: var(--accent); font-weight: 700; }
+
+/* ═══════════════════════════════════════════════════════════
+   COLLAPSIBLE DETAIL SECTIONS
+   ═══════════════════════════════════════════════════════════ */
+.collapsible-section { margin-top: 24px; }
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: 10px 0;
+  border-bottom: 0.5px solid var(--separator-soft);
+}
+.collapsible-header:hover .collapsible-chevron { color: var(--accent); }
+.collapsible-chevron {
+  font-size: 13px;
+  color: var(--text-quaternary);
+  transition: transform var(--dur-med) var(--ease-ios), color var(--dur-fast) var(--ease-ios);
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.collapsible-section.expanded .collapsible-chevron { transform: rotate(180deg); }
+.collapsible-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height var(--dur-slow) var(--ease-ios);
+}
+.collapsible-section.expanded .collapsible-body { max-height: 4000px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MULTI-SELECT MODE
+   ═══════════════════════════════════════════════════════════ */
+.select-mode-bar {
+  position: fixed;
+  bottom: calc(49px + env(safe-area-inset-bottom, 0px));
+  left: 0; right: 0;
+  z-index: 650;
+  background: rgba(10,10,12,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 0.5px solid var(--accent-border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateY(100%);
+  transition: transform var(--dur-med) var(--ease-ios);
+}
+.select-mode-bar.active { transform: translateY(0); }
+.select-mode-bar .sel-count {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.3px;
+  flex: 1;
+}
+/* Card selection overlay */
+.gun-card.selectable { cursor: pointer; }
+.gun-card.selectable .card-select-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  border: 2.5px solid transparent;
+  transition: border-color var(--dur-fast) var(--ease-ios), background var(--dur-fast) var(--ease-ios);
+  pointer-events: none;
+  z-index: 5;
+}
+.gun-card.selected .card-select-ring {
+  border-color: var(--accent);
+  background: rgba(212,175,55,0.08);
+}
+.card-select-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--separator);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  z-index: 6;
+  transition: all var(--dur-fast) var(--ease-spring);
+  color: transparent;
+}
+.gun-card.selected .card-select-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0A0A0C;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHARE / PNG MODAL
+   ═══════════════════════════════════════════════════════════ */
+.share-modal-body { padding: 20px 24px; }
+.share-option-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--separator-soft);
+  cursor: pointer;
+}
+.share-option-row:last-child { border-bottom: none; }
+.share-option-row input[type=checkbox] { accent-color: var(--accent); width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+.share-option-label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.share-option-sub   { font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+.share-preview-area {
+  background: var(--bg-primary);
+  border: 0.5px solid var(--separator-soft);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-top: 16px;
+  text-align: center;
+  min-height: 80px;
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.share-preview-area canvas { max-width: 100%; border-radius: 8px; display: block; margin: 0 auto; }
+
+/* Share theme picker active state */
+.share-style-btn {
+  color: var(--text-tertiary);
+  border-color: var(--separator-soft);
+  transition: all var(--dur-fast) var(--ease-ios);
+}
+.share-style-btn.active {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #0A0A0C !important;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px rgba(212,175,55,0.28);
+}
+.share-style-btn:not(.active):hover {
+  background: var(--fill-secondary);
+  color: var(--text-primary);
+}
+#shareRenderStatus { font-size: 12px; color: var(--text-tertiary); }
+
+/* ═══════════════════════════════════════════════════════════
+   DETAIL — BOTTOM ACTION BAR (Delete / Sell)
+   ═══════════════════════════════════════════════════════════ */
+.detail-bottom-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 32px;
+  padding: 20px 0 8px;
+  border-top: 0.5px solid var(--separator-soft);
+}
+.detail-bottom-actions .btn { flex: 1; justify-content: center; }
+
+/* ═══════════════════════════════════════════════════════════
    TOOLBAR / SEARCH
    ═══════════════════════════════════════════════════════════ */
 .toolbar {
@@ -1889,7 +2134,7 @@ select.filter-select:focus { border-color: var(--accent); }
   
   <div class="screen active" id="screen-inventory">
     <div class="toolbar">
-      <!-- Row 1: Search + View Toggle -->
+      <!-- Row 1: Search + Select + Share + View Toggle -->
       <div class="toolbar-row1">
         <button class="search-trigger" id="searchTrigger" onclick="toggleSearchBox()" title="Search">
           <span class="search-trigger-icon">⌕</span>
@@ -1899,6 +2144,10 @@ select.filter-select:focus { border-color: var(--accent); }
           <input type="text" class="search-box" placeholder="Name, brand, caliber, serial…" oninput="renderInventory(); updateClearBtn()" id="searchInput">
           <button class="search-close-btn" onclick="closeSearchBox()" title="Close">✕</button>
         </div>
+        <button class="search-trigger" id="selectModeBtn" onclick="toggleSelectMode()" title="Select multiple" style="flex-shrink:0">
+          <span style="font-size:15px">☑</span>
+          <span class="search-trigger-label" id="selectModeBtnLabel">SELECT</span>
+        </button>
         <div class="view-toggle" style="margin-left:auto;flex-shrink:0">
           <button class="view-btn active" id="vbtn-grid" onclick="setView('grid')" title="Card View">⊞</button>
           <button class="view-btn" id="vbtn-small" onclick="setView('small')" title="Small Tiles">⊟</button>
@@ -2367,7 +2616,7 @@ select.filter-select:focus { border-color: var(--accent); }
         <div class="settings-section">
           <div class="settings-section-title">CLEAR ALL INVENTORY</div>
           <p class="settings-hint" style="margin-bottom:14px">Permanently removes every firearm from your vault. This cannot be undone. Export a full backup first.</p>
-          <button class="btn btn-danger" onclick="if(confirm('This will permanently delete all firearms. Export a backup first.\n\nContinue?')){inventory=[];save();renderInventory();updateStats();closeModal('settingsModal');showToast('Inventory cleared','info')}">🗑 CLEAR ALL INVENTORY</button>
+          <button class="btn btn-danger" onclick="armoryConfirm({icon:'🗑',title:'Clear All Inventory',body:'This will permanently delete every firearm from your vault. Export a full backup first. This cannot be undone.',confirmLabel:'CLEAR ALL',danger:true,onConfirm:()=>{inventory=[];save();renderInventory();updateStats();closeModal('settingsModal');showToast('Inventory cleared','info')}})">🗑 CLEAR ALL INVENTORY</button>
         </div>
 
         <div class="settings-section">
@@ -2379,7 +2628,7 @@ select.filter-select:focus { border-color: var(--accent); }
         <div class="settings-section">
           <div class="settings-section-title">CLEAR API KEY</div>
           <p class="settings-hint" style="margin-bottom:14px">Removes your stored Groq API key. AI features will stop working until a new key is added.</p>
-          <button class="btn btn-danger" onclick="if(confirm('Remove your stored API key?')){localStorage.removeItem('armory_api_key');document.getElementById('apiKeyInput').value='';updateApiStatus();closeModal('settingsModal');showToast('API key removed','info')}">🔑 REMOVE API KEY</button>
+          <button class="btn btn-danger" onclick="armoryConfirm({icon:'🔑',title:'Remove API Key',body:'Your stored Groq API key will be deleted. AI features will stop working until a new key is added.',confirmLabel:'REMOVE',danger:true,onConfirm:()=>{localStorage.removeItem('armory_api_key');document.getElementById('apiKeyInput').value='';updateApiStatus();closeModal('settingsModal');showToast('API key removed','info')}})">🔑 REMOVE API KEY</button>
         </div>
 
       </div>
@@ -3076,8 +3325,7 @@ function showDetail(id) {
         <div class="detail-actions">
           <button class="btn" onclick="openEditModal('${g.id}')">✏ EDIT</button>
           <button class="btn" id="detailAiUpdateBtn" onclick="aiUpdateFromDetail('${g.id}')">🤖 AI UPDATE SPECS</button>
-          <button class="btn btn-danger" onclick="deleteFirearm('${g.id}')">🗑 DELETE</button>
-          <button class="btn btn-sm" onclick="openSellModal('${g.id}')" style="border-color:rgba(200,168,75,0.4);color:var(--accent);font-size:12px">📦 MARK AS SOLD</button>
+          <button class="btn" onclick="openDetailShareModal('${g.id}')" style="border-color:var(--accent-border);color:var(--accent)">⬡ SHARE</button>
         </div>
         <div id="detailAiStatus" style="display:none;margin-top:10px">
           <span style="display:flex;align-items:center;gap:8px;font-family:var(--font);font-size:11px;color:var(--accent)">
@@ -3087,16 +3335,23 @@ function showDetail(id) {
         </div>
       </div>
     </div>
-    <div style="margin-top:24px">
-      <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
-        <span>AI DESCRIPTION</span>
-        <button id="aiDescRefreshBtn" onclick="refreshAIDescription('${g.id}')" title="Force re-fetch AI description" style="background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px;cursor:pointer;${g.ai_description ? 'display:none' : ''}">↺ REFRESH</button>
+    <div class="collapsible-section expanded" id="sec-aidesc">
+      <div class="collapsible-header" onclick="toggleSection('sec-aidesc')">
+        <div class="section-title" style="margin:0;border:none;padding:0;display:flex;align-items:center;justify-content:space-between;width:100%">
+          <span>AI DESCRIPTION</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button id="aiDescRefreshBtn" onclick="event.stopPropagation();refreshAIDescription('${g.id}')" title="Force re-fetch AI description" style="background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--font);font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px;cursor:pointer;${g.ai_description ? 'display:none' : ''}">↺ REFRESH</button>
+            <span class="collapsible-chevron">▾</span>
+          </div>
+        </div>
       </div>
-      <div class="detail-description" id="aiDesc">
-        ${g.ai_description
-          ? g.ai_description.split('\n\n').map(p => p ? `<p style="margin-bottom:12px">${p}</p>` : '').join('')
-          : '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> <span>Fetching firearm data...</span></div>'
-        }
+      <div class="collapsible-body">
+        <div class="detail-description" id="aiDesc" style="margin-top:12px">
+          ${g.ai_description
+            ? g.ai_description.split('\n\n').map(p => p ? `<p style="margin-bottom:12px">${p}</p>` : '').join('')
+            : '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div> <span>Fetching firearm data...</span></div>'
+          }
+        </div>
       </div>
     </div>`;
 
@@ -3155,76 +3410,106 @@ function buildRmaSections(g) {
   const recentLog = (maint.log||[]).slice(-3).reverse().map(e =>
     `<div class="rma-log-entry">${e.date} — ${e.note}</div>`).join('');
 
-  return `<div class="rma-grid" style="padding:0 0 20px 0">
-
-    
-    <div class="rma-panel">
-      <div class="rma-title">🎯 RANGE LOG</div>
-      <div style="margin-bottom:6px;font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px">TOTAL ROUNDS FIRED</div>
-      <div class="rma-counter">
-        <button class="rma-counter-btn" onclick="rmaAdjustRounds('${g.id}',-10)">−</button>
-        <div class="rma-total" id="rmaTotal_${g.id}">${(rr.total||0).toLocaleString()}</div>
-        <button class="rma-counter-btn" onclick="rmaAdjustRounds('${g.id}',10)">+</button>
+  return `
+    <div class="collapsible-section" id="sec-range">
+      <div class="collapsible-header" onclick="toggleSection('sec-range')">
+        <div class="section-title" style="margin:0;border:none;padding:0">🎯 RANGE LOG</div>
+        <span class="collapsible-chevron">▾</span>
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <input class="rma-input" type="number" id="rmaAdd_${g.id}" placeholder="Add rounds from session" min="0" style="flex:1">
-        <button class="rma-counter-btn" style="width:auto;padding:0 10px;font-size:12px;font-family:var(--heading);letter-spacing:1px" onclick="rmaLogSession('${g.id}')">LOG</button>
-      </div>
-      <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px">RECENT SESSIONS</div>
-      <div id="rmaLog_${g.id}">${recentLog || '<div style="font-family:var(--font);font-size:11px;color:var(--text-dim)">No sessions logged</div>'}</div>
-    </div>
-
-    
-    <div class="rma-panel">
-      <div class="rma-title">🔧 MAINTENANCE</div>
-      <div class="maint-date" style="display:flex;gap:8px;align-items:center">
-        <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);white-space:nowrap">LAST SERVICE</div>
-        <input class="rma-input" type="date" id="maintDate_${g.id}" value="${maint.last_service||''}" style="flex:1">
-      </div>
-      ${maintTasks.map(([key,label]) => `
-      <div class="rma-row">
-        <input type="checkbox" id="maint_${key}_${g.id}" ${(maint.tasks||{})[key] ? 'checked' : ''} onchange="rmaSaveMaint('${g.id}')">
-        <label for="maint_${key}_${g.id}">${label}</label>
-      </div>`).join('')}
-      <input class="rma-input" type="text" id="maintNote_${g.id}" placeholder="Add maintenance note..." style="margin-top:8px">
-      <button class="rma-save-btn" onclick="rmaSaveMaint('${g.id}', true)">SAVE & LOG</button>
-    </div>
-
-    
-    <div class="rma-panel">
-      <div class="rma-title">⚙ ACCESSORIES</div>
-      ${accList.map(([key,label]) => `
-      <div class="rma-row">
-        <input type="checkbox" id="acc_${key}_${g.id}" ${acc[key] ? 'checked' : ''} onchange="rmaSaveAccessories('${g.id}')">
-        <label for="acc_${key}_${g.id}">${label}</label>
-      </div>`).join('')}
-      <div style="margin-top:10px">
-        <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px">CUSTOM / OTHER</div>
-        <input class="rma-input" type="text" id="accCustom_${g.id}" value="${acc.custom||''}" placeholder="e.g. aftermarket barrel, compensator..." onchange="rmaSaveAccessories('${g.id}')">
+      <div class="collapsible-body">
+        <div class="rma-grid" style="padding:12px 0 4px 0">
+          <div class="rma-panel" style="margin-bottom:0">
+            <div style="margin-bottom:6px;font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px">TOTAL ROUNDS FIRED</div>
+            <div class="rma-counter">
+              <button class="rma-counter-btn" onclick="rmaAdjustRounds('${g.id}',-10)">−</button>
+              <div class="rma-total" id="rmaTotal_${g.id}">${(rr.total||0).toLocaleString()}</div>
+              <button class="rma-counter-btn" onclick="rmaAdjustRounds('${g.id}',10)">+</button>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <input class="rma-input" type="number" id="rmaAdd_${g.id}" placeholder="Add rounds from session" min="0" style="flex:1">
+              <button class="rma-counter-btn" style="width:auto;padding:0 10px;font-size:12px;font-family:var(--heading);letter-spacing:1px" onclick="rmaLogSession('${g.id}')">LOG</button>
+            </div>
+            <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px">RECENT SESSIONS</div>
+            <div id="rmaLog_${g.id}">${recentLog || '<div style="font-family:var(--font);font-size:11px;color:var(--text-dim)">No sessions logged</div>'}</div>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div>
+    <div class="collapsible-section" id="sec-maint">
+      <div class="collapsible-header" onclick="toggleSection('sec-maint')">
+        <div class="section-title" style="margin:0;border:none;padding:0">🔧 MAINTENANCE</div>
+        <span class="collapsible-chevron">▾</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="rma-grid" style="padding:12px 0 4px 0">
+          <div class="rma-panel" style="margin-bottom:0">
+            <div class="maint-date" style="display:flex;gap:8px;align-items:center">
+              <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);white-space:nowrap">LAST SERVICE</div>
+              <input class="rma-input" type="date" id="maintDate_${g.id}" value="${maint.last_service||''}" style="flex:1">
+            </div>
+            ${maintTasks.map(([key,label]) => `
+            <div class="rma-row">
+              <input type="checkbox" id="maint_${key}_${g.id}" ${(maint.tasks||{})[key] ? 'checked' : ''} onchange="rmaSaveMaint('${g.id}')">
+              <label for="maint_${key}_${g.id}">${label}</label>
+            </div>`).join('')}
+            <input class="rma-input" type="text" id="maintNote_${g.id}" placeholder="Add maintenance note..." style="margin-top:8px">
+            <button class="rma-save-btn" onclick="rmaSaveMaint('${g.id}', true)">SAVE & LOG</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <div class="docs-panel">
-    <div class="docs-title">
-      <span>📁 DOCUMENTS</span>
-      <span style="font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px">ATTACHED FILES & GENERATED DOCS</span>
+    <div class="collapsible-section" id="sec-acc">
+      <div class="collapsible-header" onclick="toggleSection('sec-acc')">
+        <div class="section-title" style="margin:0;border:none;padding:0">⚙ ACCESSORIES</div>
+        <span class="collapsible-chevron">▾</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="rma-grid" style="padding:12px 0 4px 0">
+          <div class="rma-panel" style="margin-bottom:0">
+            ${accList.map(([key,label]) => `
+            <div class="rma-row">
+              <input type="checkbox" id="acc_${key}_${g.id}" ${acc[key] ? 'checked' : ''} onchange="rmaSaveAccessories('${g.id}')">
+              <label for="acc_${key}_${g.id}">${label}</label>
+            </div>`).join('')}
+            <div style="margin-top:10px">
+              <div style="font-family:var(--font);font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:4px">CUSTOM / OTHER</div>
+              <input class="rma-input" type="text" id="accCustom_${g.id}" value="${acc.custom||''}" placeholder="e.g. aftermarket barrel, compensator..." onchange="rmaSaveAccessories('${g.id}')">
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="docs-grid" id="docsGrid_${g.id}">${renderDocsGrid(g)}</div>
-    <div class="docs-actions">
-      <label class="btn btn-sm" style="cursor:pointer" title="Attach a file — PDF, image, or any document">
-        📎 ATTACH FILE
-        <input type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple style="display:none" onchange="attachDocFiles(event,'${g.id}')">
-      </label>
+
+    <div class="collapsible-section" id="sec-docs">
+      <div class="collapsible-header" onclick="toggleSection('sec-docs')">
+        <div class="section-title" style="margin:0;border:none;padding:0">📁 DOCUMENTS</div>
+        <span class="collapsible-chevron">▾</span>
+      </div>
+      <div class="collapsible-body">
+        <div class="docs-panel" style="margin-top:12px">
+          <div class="docs-grid" id="docsGrid_${g.id}">${renderDocsGrid(g)}</div>
+          <div class="docs-actions">
+            <label class="btn btn-sm" style="cursor:pointer" title="Attach a file — PDF, image, or any document">
+              📎 ATTACH FILE
+              <input type="file" accept="image/*,.pdf,.doc,.docx,.txt" multiple style="display:none" onchange="attachDocFiles(event,'${g.id}')">
+            </label>
+          </div>
+          <div class="docs-generate-row">
+            <button class="btn btn-sm" onclick="generateBillOfSale('${g.id}')">📝 BILL OF SALE</button>
+            <button class="btn btn-sm" onclick="generate4473Reminder('${g.id}')">📋 4473 CHECKLIST</button>
+            <button class="btn btn-sm" onclick="exportInsurance('${g.id}')">🛡 INSURANCE REPORT</button>
+            <button class="btn btn-sm" onclick="saveBOSToRecord('${g.id}')" style="border-color:rgba(200,168,75,0.4);color:var(--accent)">💾 SAVE BOS TO RECORD</button>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="docs-generate-row">
-      <button class="btn btn-sm" onclick="generateBillOfSale('${g.id}')">📝 BILL OF SALE</button>
-      <button class="btn btn-sm" onclick="generate4473Reminder('${g.id}')">📋 4473 CHECKLIST</button>
-      <button class="btn btn-sm" onclick="exportInsurance('${g.id}')">🛡 INSURANCE REPORT</button>
-      <button class="btn btn-sm" onclick="saveBOSToRecord('${g.id}')" style="border-color:rgba(200,168,75,0.4);color:var(--accent)">💾 SAVE BOS TO RECORD</button>
+
+    <div class="detail-bottom-actions">
+      <button class="btn btn-danger" onclick="deleteFirearm('${g.id}')">🗑 DELETE</button>
+      <button class="btn" onclick="openSellModal('${g.id}')" style="border-color:rgba(200,168,75,0.4);color:var(--accent)">📦 MARK AS SOLD</button>
     </div>
-  </div>
 `;
 }
 
@@ -3602,12 +3887,20 @@ function saveFirearm() {
 }
 
 function deleteFirearm(id) {
-  if (!confirm('Delete this firearm from inventory?')) return;
-  inventory = inventory.filter(x=>x.id!==id);
-  save(); renderInventory();
-  document.getElementById('detailTab').classList.remove('tab-visible');
-  switchScreen('inventory', document.querySelector('[data-screen=inventory]'));
-  showToast('Firearm removed', 'info');
+  armoryConfirm({
+    icon: '🗑',
+    title: 'Delete Firearm',
+    body: 'This firearm will be permanently removed from your vault. This cannot be undone.',
+    confirmLabel: 'DELETE',
+    danger: true,
+    onConfirm: () => {
+      inventory = inventory.filter(x => x.id !== id);
+      save(); renderInventory();
+      document.getElementById('detailTab').classList.remove('tab-visible');
+      switchScreen('inventory', document.querySelector('[data-screen=inventory]'));
+      showToast('Firearm removed', 'info');
+    }
+  });
 }
 
 // ══════════════════════════════════════════
@@ -4181,17 +4474,25 @@ function importJSONConfirm(mode) {
   }
 
   if (mode === 'replace') {
-    if (!confirm('REPLACE ALL -- this will delete all ' + inventory.length + ' current firearms and load ' + items.length + ' from the backup.\n\nSettings and notes in the backup will also be restored.\n\nContinue?')) return;
-    inventory = items.map(g => ({ ...g, id: g.id || uid() }));
-    save();
-    restoreSettingsAndFeedback();
-    renderInventory();
-    updateCaliberFilter();
-    updateStats();
-    _pendingJSONData = null;
-    document.getElementById('jsonImportInfo').textContent = '';
-    showToast('Replaced -- ' + inventory.length + ' firearms loaded', 'success');
-
+    armoryConfirm({
+      icon: '⚠️',
+      title: 'Replace All Inventory',
+      body: `This will delete all ${inventory.length} current firearms and load ${items.length} from the backup. Settings and notes in the backup will also be restored.`,
+      confirmLabel: 'REPLACE',
+      danger: true,
+      onConfirm: () => {
+        inventory = items.map(g => ({ ...g, id: g.id || uid() }));
+        save();
+        restoreSettingsAndFeedback();
+        renderInventory();
+        updateCaliberFilter();
+        updateStats();
+        _pendingJSONData = null;
+        document.getElementById('jsonImportInfo').textContent = '';
+        showToast('Replaced -- ' + inventory.length + ' firearms loaded', 'success');
+      }
+    });
+    return;
   } else {
     // Merge -- upsert by serial number, fall back to id
     let added = 0, updated = 0;
@@ -4543,12 +4844,20 @@ function deleteFeedbackItem(tab, index) {
 
 function clearFeedbackTab() {
   if (_fbTab === 'all') return;
-  if (!confirm(`Clear all ${_fbTab}?`)) return;
-  const data = loadFeedback();
-  data[_fbTab] = [];
-  saveFeedback(data);
-  renderFeedbackList();
-  showToast(`${_fbTab} cleared`, 'info');
+  armoryConfirm({
+    icon: '🗑',
+    title: `Clear ${_fbTab.charAt(0).toUpperCase() + _fbTab.slice(1)}`,
+    body: `All entries in the ${_fbTab} tab will be deleted.`,
+    confirmLabel: 'CLEAR',
+    danger: true,
+    onConfirm: () => {
+      const data = loadFeedback();
+      data[_fbTab] = [];
+      saveFeedback(data);
+      renderFeedbackList();
+      showToast(`${_fbTab} cleared`, 'info');
+    }
+  });
 }
 
 function exportFeedback() {
@@ -4591,6 +4900,428 @@ function sendFeedbackEmail() {
 
 // ── Init on load ──
 updateApiStatus();
+
+// ══════════════════════════════════════════
+//  THEMED CONFIRM / ALERT SYSTEM
+// ══════════════════════════════════════════
+let _acCallback = null;
+
+function armoryConfirm({ icon='⚠️', title='Confirm', body='', confirmLabel='OK', danger=false, onConfirm }) {
+  _acCallback = onConfirm || null;
+  document.getElementById('acIcon').textContent = icon;
+  document.getElementById('acTitle').textContent = title;
+  document.getElementById('acBody').textContent = body;
+  const okBtn = document.getElementById('acConfirm');
+  okBtn.textContent = confirmLabel;
+  okBtn.className = danger ? 'confirm-danger' : 'confirm-primary';
+  document.getElementById('armoryConfirmOverlay').classList.add('open');
+}
+
+function armoryConfirmOk() {
+  document.getElementById('armoryConfirmOverlay').classList.remove('open');
+  if (_acCallback) { const cb = _acCallback; _acCallback = null; cb(); }
+}
+
+function armoryConfirmCancel() {
+  document.getElementById('armoryConfirmOverlay').classList.remove('open');
+  _acCallback = null;
+}
+
+// Close on overlay click — wired up in DOMContentLoaded
+
+// ══════════════════════════════════════════
+//  COLLAPSIBLE DETAIL SECTIONS
+// ══════════════════════════════════════════
+const _sectionState = {};
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const expanded = el.classList.toggle('expanded');
+  _sectionState[id] = expanded;
+}
+
+// ══════════════════════════════════════════
+//  MULTI-SELECT MODE
+// ══════════════════════════════════════════
+let _selectMode = false;
+let _selectedIds = new Set();
+
+function toggleSelectMode() {
+  _selectMode ? exitSelectMode() : enterSelectMode();
+}
+
+function enterSelectMode() {
+  _selectMode = true;
+  _selectedIds.clear();
+  document.getElementById('selectModeBtn').classList.add('active');
+  document.getElementById('selectModeBtnLabel').textContent = 'CANCEL';
+  document.getElementById('selectModeBar').classList.add('active');
+  updateSelectionUI();
+  // Re-render to inject checkboxes
+  renderInventorySelectMode();
+}
+
+function exitSelectMode() {
+  _selectMode = false;
+  _selectedIds.clear();
+  document.getElementById('selectModeBtn').classList.remove('active');
+  document.getElementById('selectModeBtnLabel').textContent = 'SELECT';
+  document.getElementById('selectModeBar').classList.remove('active');
+  renderInventory(); // restore normal cards
+}
+
+function toggleCardSelect(id, e) {
+  if (!_selectMode) return;
+  e.stopPropagation();
+  if (_selectedIds.has(id)) { _selectedIds.delete(id); }
+  else { _selectedIds.add(id); }
+  updateSelectionUI();
+  // Toggle selected class on the card
+  const card = document.querySelector(`#inventoryGrid [data-id="${id}"]`);
+  if (card) card.classList.toggle('selected', _selectedIds.has(id));
+}
+
+function selectAll() {
+  const cards = document.querySelectorAll('#inventoryGrid [data-id]');
+  cards.forEach(c => { _selectedIds.add(c.dataset.id); c.classList.add('selected'); });
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const n = _selectedIds.size;
+  document.getElementById('selCount').textContent = n + ' SELECTED';
+  const shareBtn = document.getElementById('shareSelectedBtn');
+  shareBtn.disabled = n === 0;
+}
+
+function renderInventorySelectMode() {
+  // Reuse renderInventory then patch cards for select mode
+  renderInventory();
+  setTimeout(() => {
+    const cards = document.querySelectorAll('#inventoryGrid [data-id]');
+    cards.forEach(card => {
+      const id = card.dataset.id;
+      // Remove existing click and add select handler
+      card.onclick = (e) => toggleCardSelect(id, e);
+      card.classList.add('selectable');
+      if (_selectedIds.has(id)) card.classList.add('selected');
+      // Inject ring and check overlay
+      if (!card.querySelector('.card-select-ring')) {
+        const ring = document.createElement('div');
+        ring.className = 'card-select-ring';
+        card.style.position = 'relative';
+        card.prepend(ring);
+      }
+      const img = card.querySelector('.gun-card-img');
+      if (img && !img.querySelector('.card-select-check')) {
+        const check = document.createElement('div');
+        check.className = 'card-select-check';
+        check.textContent = '✓';
+        img.appendChild(check);
+      }
+    });
+  }, 0);
+}
+
+// Long-press wired up in DOMContentLoaded
+function initLongPress() {
+  let _lpTimer = null;
+  const grid = document.getElementById('inventoryGrid');
+  if (!grid) return;
+  grid.addEventListener('pointerdown', e => {
+    if (_selectMode) return;
+    const card = e.target.closest('[data-id]');
+    if (!card) return;
+    _lpTimer = setTimeout(() => {
+      enterSelectMode();
+      _selectedIds.add(card.dataset.id);
+      updateSelectionUI();
+      setTimeout(() => {
+        const c = document.querySelector(`#inventoryGrid [data-id="${card.dataset.id}"]`);
+        if (c) c.classList.add('selected');
+      }, 50);
+    }, 500);
+  });
+  grid.addEventListener('pointerup',    () => clearTimeout(_lpTimer));
+  grid.addEventListener('pointermove',   () => clearTimeout(_lpTimer));
+  grid.addEventListener('pointercancel', () => clearTimeout(_lpTimer));
+}
+
+// ══════════════════════════════════════════
+//  SHARE / PNG CARD
+// ══════════════════════════════════════════
+let _shareMode  = 'detail'; // 'detail' | 'vault'
+let _shareGunId = null;
+let _shareStyle = 'dark';
+
+function setShareStyle(s) {
+  _shareStyle = s;
+  document.querySelectorAll('.share-style-btn').forEach(b => b.classList.toggle('active', b.dataset.style === s));
+}
+
+function openDetailShareModal(id) {
+  _shareMode  = 'detail';
+  _shareGunId = id;
+  const g = inventory.find(x => x.id === id);
+  document.getElementById('shareModalTitle').textContent = g ? `⬡ EXPORT — ${g.make || ''} ${g.model || ''}` : '⬡ EXPORT FIREARM CARD';
+  document.getElementById('shareDetailOptions').style.display = '';
+  document.getElementById('shareVaultOptions').style.display  = 'none';
+  openModal('shareModal');
+}
+
+function openVaultShareModal() {
+  if (_selectedIds.size === 0) return;
+  _shareMode = 'vault';
+  document.getElementById('shareModalTitle').textContent = `⬡ EXPORT COLLECTION (${_selectedIds.size} SELECTED)`;
+  document.getElementById('shareDetailOptions').style.display = 'none';
+  document.getElementById('shareVaultOptions').style.display  = '';
+  openModal('shareModal');
+}
+
+function generateSharePDF() {
+  closeModal('shareModal');
+  if (_shareMode === 'detail') {
+    exportFirearmCard(_shareGunId);
+  } else {
+    exportVaultCard([..._selectedIds]);
+  }
+}
+
+// ── SINGLE FIREARM CARD PDF ──
+function exportFirearmCard(id) {
+  const g = inventory.find(x => x.id === id);
+  if (!g) return;
+
+  const dark  = _shareStyle === 'dark';
+  const BG    = dark ? '#0A0A0C' : '#F2F2F7';
+  const CARD  = dark ? '#1C1C1E' : '#FFFFFF';
+  const TEXT  = dark ? '#FFFFFF' : '#1C1C1E';
+  const SUB   = dark ? 'rgba(235,235,245,0.55)' : 'rgba(60,60,67,0.55)';
+  const GOLD  = '#C8A84B';
+  const BORD  = dark ? 'rgba(84,84,88,0.5)' : 'rgba(60,60,67,0.15)';
+  const CHIP  = dark ? '#2C2C2E' : '#E5E5EA';
+
+  const inclPhoto = document.getElementById('shr-photo').checked;
+  const inclSpecs = document.getElementById('shr-specs').checked;
+  const inclDesc  = document.getElementById('shr-desc').checked;
+  const inclRange = document.getElementById('shr-range').checked;
+  const inclMaint = document.getElementById('shr-maint').checked;
+  const inclAcc   = document.getElementById('shr-acc').checked;
+
+  const specs = inclSpecs ? [
+    ['TYPE',      g.type],
+    ['CALIBER',   g.caliber],
+    ['SERIAL NO', g.serial_number],
+    ['YEAR',      g.year],
+    ['ACTION',    g.action],
+    ['CAPACITY',  g.capacity],
+    ['BARREL',    g.barrel_length],
+    ['OAL',       g.overall_length],
+    ['WEIGHT',    g.weight],
+    ['FINISH',    g.finish],
+    ['CONDITION', g.condition],
+    ['VALUE',     g.value ? '$' + Number(g.value).toLocaleString() : ''],
+    ['PURCHASED', g.purchase_date],
+    ['STORAGE',   g.storage_location],
+  ].filter(([,v]) => v) : [];
+
+  const specsHtml = specs.length ? `
+    <table class="spec-table">
+      ${specs.map(([l,v]) => `<tr><td class="spec-label">${l}</td><td class="spec-val">${v}</td></tr>`).join('')}
+    </table>` : '';
+
+  const descHtml = (inclDesc && g.ai_description) ? `
+    <div class="section">
+      <div class="section-title">AI DESCRIPTION</div>
+      <div class="desc-text">${g.ai_description.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>')}</div>
+    </div>` : '';
+
+  const rr = g.range_rounds || {};
+  const maint = g.maintenance || {};
+  const acc   = g.accessories || {};
+
+  const rangeHtml = (inclRange && rr.total) ? `
+    <div class="chip-row">
+      <span class="chip">🎯 ${Number(rr.total).toLocaleString()} ROUNDS FIRED</span>
+      ${(rr.sessions || []).slice(-3).reverse().map(s => `<span class="chip-sub">${s.date} — ${s.rounds} rds</span>`).join('')}
+    </div>` : '';
+
+  const maintHtml = (inclMaint && (maint.last_service || Object.values(maint.tasks||{}).some(Boolean))) ? `
+    <div class="chip-row">
+      ${maint.last_service ? `<span class="chip">🔧 LAST SERVICE: ${maint.last_service}</span>` : ''}
+      ${Object.entries(maint.tasks||{}).filter(([,v])=>v).map(([k])=>`<span class="chip-sub">${k.replace(/_/g,' ')}</span>`).join('')}
+    </div>` : '';
+
+  const accNames = Object.entries(acc).filter(([k,v])=>v&&k!=='custom').map(([k])=>k.replace(/_/g,' ').toUpperCase());
+  const accHtml = (inclAcc && (accNames.length || acc.custom)) ? `
+    <div class="chip-row">
+      <span class="chip">⚙ ACCESSORIES</span>
+      ${accNames.map(a=>`<span class="chip-sub">${a}</span>`).join('')}
+      ${acc.custom ? `<span class="chip-sub">${acc.custom}</span>` : ''}
+    </div>` : '';
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ARMORY — ${g.make || ''} ${g.model || ''}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:${BG}; color:${TEXT}; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif; padding:32px; min-height:100vh; }
+  .card { background:${CARD}; border:1px solid ${BORD}; border-radius:16px; overflow:hidden; max-width:680px; margin:0 auto; box-shadow:0 24px 64px rgba(0,0,0,0.4); }
+  .header { padding:24px 28px 20px; border-bottom:1px solid ${BORD}; display:flex; justify-content:space-between; align-items:flex-start; }
+  .header-left .brand { font-size:11px; font-weight:600; color:${GOLD}; letter-spacing:2px; margin-bottom:6px; }
+  .header-left .model { font-size:28px; font-weight:800; color:${TEXT}; letter-spacing:-0.5px; line-height:1.1; }
+  .header-right { text-align:right; flex-shrink:0; }
+  .type-badge { display:inline-block; background:${dark?'rgba(200,168,75,0.15)':'rgba(200,168,75,0.12)'}; border:1px solid rgba(200,168,75,0.35); color:${GOLD}; font-size:10px; font-weight:700; letter-spacing:1.5px; padding:4px 12px; border-radius:20px; }
+  .armory-logo { font-size:10px; color:${SUB}; letter-spacing:1px; margin-top:8px; }
+  .photo { width:100%; height:300px; object-fit:cover; display:block; }
+  .photo-placeholder { width:100%; height:200px; background:${dark?'#111':'#f0f0f0'}; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:0.2; }
+  .body { padding:24px 28px; }
+  .spec-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+  .spec-label { font-size:9px; font-weight:700; letter-spacing:1.5px; color:${GOLD}; padding:9px 16px 9px 0; border-bottom:1px solid ${BORD}; width:36%; vertical-align:top; }
+  .spec-val   { font-size:13px; font-weight:600; color:${TEXT}; padding:9px 0; border-bottom:1px solid ${BORD}; vertical-align:top; }
+  .section { margin-bottom:20px; }
+  .section-title { font-size:9px; font-weight:700; letter-spacing:2px; color:${GOLD}; margin-bottom:10px; }
+  .desc-text { font-size:13px; color:${SUB}; line-height:1.75; }
+  .desc-text p { margin-bottom:10px; }
+  .chip-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+  .chip { background:${CHIP}; border:1px solid ${BORD}; color:${TEXT}; font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px; letter-spacing:0.3px; }
+  .chip-sub { background:transparent; border:1px solid ${BORD}; color:${SUB}; font-size:10px; padding:4px 10px; border-radius:20px; }
+  .footer { padding:14px 28px; border-top:1px solid ${BORD}; display:flex; justify-content:space-between; align-items:center; }
+  .footer-logo { font-size:10px; font-weight:700; color:${GOLD}; letter-spacing:2px; }
+  .footer-date { font-size:10px; color:${SUB}; }
+  @media print {
+    body { padding:0; background:${BG}; }
+    .card { border-radius:0; box-shadow:none; max-width:100%; }
+  }
+</style></head><body>
+<div class="card">
+  <div class="header">
+    <div class="header-left">
+      <div class="brand">${(g.make || '').toUpperCase()}</div>
+      <div class="model">${g.model || 'UNKNOWN'}</div>
+    </div>
+    <div class="header-right">
+      ${g.type ? `<div class="type-badge">${g.type}</div>` : ''}
+      <div class="armory-logo">⬡ ARMORY</div>
+    </div>
+  </div>
+  ${inclPhoto && g.image_url ? `<img class="photo" src="${g.image_url}">` : inclPhoto ? '<div class="photo-placeholder">🔫</div>' : ''}
+  <div class="body">
+    ${specsHtml}
+    ${descHtml}
+    ${rangeHtml}
+    ${maintHtml}
+    ${accHtml}
+    ${g.notes && !inclDesc ? `<div class="section"><div class="section-title">NOTES</div><div class="desc-text">${g.notes}</div></div>` : ''}
+  </div>
+  <div class="footer">
+    <div class="footer-logo">LAZLAB CREATIONS · ARMORY</div>
+    <div class="footer-date">${new Date().toLocaleDateString()}</div>
+  </div>
+</div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) showToast('Allow pop-ups to export the card', 'error');
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
+}
+
+// ── VAULT COLLECTION PDF ──
+function exportVaultCard(ids) {
+  const guns = ids.map(id => inventory.find(x => x.id === id)).filter(Boolean);
+  if (!guns.length) return;
+
+  const dark = _shareStyle === 'dark';
+  const BG   = dark ? '#0A0A0C' : '#F2F2F7';
+  const CARD = dark ? '#1C1C1E' : '#FFFFFF';
+  const TEXT = dark ? '#FFFFFF' : '#1C1C1E';
+  const SUB  = dark ? 'rgba(235,235,245,0.55)' : 'rgba(60,60,67,0.55)';
+  const GOLD = '#C8A84B';
+  const BORD = dark ? 'rgba(84,84,88,0.5)' : 'rgba(60,60,67,0.15)';
+
+  const totalValue = guns.reduce((s,g) => s + (Number(g.value)||0), 0);
+
+  const gunCards = guns.map(g => `
+    <div class="gun-card">
+      ${g.image_url
+        ? `<img class="gun-img" src="${g.image_url}">`
+        : `<div class="gun-img-ph">🔫</div>`}
+      <div class="gun-body">
+        <div class="gun-brand">${(g.make||'').toUpperCase()}</div>
+        <div class="gun-model">${g.model || 'UNKNOWN'}</div>
+        <div class="gun-chips">
+          ${g.type    ? `<span class="gchip">${g.type}</span>` : ''}
+          ${g.caliber ? `<span class="gchip">${g.caliber}</span>` : ''}
+          ${g.action  ? `<span class="gchip">${g.action}</span>` : ''}
+          ${g.condition ? `<span class="gchip">${g.condition}</span>` : ''}
+        </div>
+        ${g.value ? `<div class="gun-value">$${Number(g.value).toLocaleString()}</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ARMORY — Collection Export</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:${BG}; color:${TEXT}; font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif; padding:32px; }
+  .page { max-width:860px; margin:0 auto; }
+  .header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; padding-bottom:16px; border-bottom:2px solid ${GOLD}; }
+  .h-title { font-size:32px; font-weight:900; letter-spacing:3px; color:${GOLD}; line-height:1; }
+  .h-sub { font-size:10px; color:${SUB}; letter-spacing:2px; margin-top:6px; }
+  .h-stats { text-align:right; }
+  .h-count { font-size:13px; font-weight:700; color:${TEXT}; }
+  .h-value { font-size:22px; font-weight:800; color:${GOLD}; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+  .gun-card { background:${CARD}; border:1px solid ${BORD}; border-radius:12px; overflow:hidden; }
+  .gun-img  { width:100%; height:160px; object-fit:cover; display:block; }
+  .gun-img-ph { width:100%; height:120px; background:${dark?'#111':'#f0f0f0'}; display:flex; align-items:center; justify-content:center; font-size:40px; opacity:0.2; }
+  .gun-body { padding:14px; }
+  .gun-brand { font-size:9px; font-weight:700; letter-spacing:2px; color:${GOLD}; margin-bottom:3px; }
+  .gun-model { font-size:15px; font-weight:800; color:${TEXT}; margin-bottom:8px; line-height:1.2; }
+  .gun-chips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px; }
+  .gchip { font-size:9px; font-weight:600; padding:3px 8px; background:${dark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)'}; border:1px solid ${BORD}; border-radius:20px; color:${SUB}; letter-spacing:0.3px; }
+  .gun-value { font-size:14px; font-weight:800; color:${GOLD}; }
+  .footer { margin-top:28px; padding-top:14px; border-top:1px solid ${BORD}; display:flex; justify-content:space-between; font-size:10px; }
+  .footer-logo { color:${GOLD}; font-weight:700; letter-spacing:2px; }
+  .footer-date { color:${SUB}; }
+  @media print {
+    body { padding:16px; background:${BG}; }
+    .gun-card { break-inside:avoid; }
+  }
+</style></head><body>
+<div class="page">
+  <div class="header">
+    <div>
+      <div class="h-title">⬡ ARMORY</div>
+      <div class="h-sub">FIREARMS VAULT · COLLECTION EXPORT</div>
+    </div>
+    <div class="h-stats">
+      <div class="h-count">${guns.length} FIREARM${guns.length!==1?'S':''}</div>
+      ${totalValue ? `<div class="h-value">$${totalValue.toLocaleString()}</div>` : ''}
+    </div>
+  </div>
+  <div class="grid">${gunCards}</div>
+  <div class="footer">
+    <span class="footer-logo">LAZLAB CREATIONS · ARMORY</span>
+    <span class="footer-date">${new Date().toLocaleDateString()}</span>
+  </div>
+</div>
+<script>window.onload=()=>window.print()<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  const win  = window.open(url, '_blank');
+  if (!win) showToast('Allow pop-ups to export the collection', 'error');
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
+}
+
+
 
 // ══════════════════════════════════════════
 //  PHOTO GALLERY
@@ -4748,11 +5479,19 @@ function deleteDoc(id, idx) {
   const g = inventory.find(x => x.id === id);
   if (!g || !g.documents) return;
   const docName = g.documents[idx]?.name || 'this document';
-  if (!confirm(`Remove "${docName}" from this firearm?`)) return;
-  g.documents.splice(idx, 1);
-  save();
-  refreshDocsGrid(id);
-  showToast('Document removed', 'info');
+  armoryConfirm({
+    icon: '📄',
+    title: 'Remove Document',
+    body: `"${docName}" will be removed from this firearm's records.`,
+    confirmLabel: 'REMOVE',
+    danger: true,
+    onConfirm: () => {
+      g.documents.splice(idx, 1);
+      save();
+      refreshDocsGrid(id);
+      showToast('Document removed', 'info');
+    }
+  });
 }
 
 // ══════════════════════════════════════════
@@ -5024,11 +5763,19 @@ function deleteSoldDoc(soldId, idx) {
   const r = soldInventory.find(x => x.sold_id === soldId);
   if (!r || !r.documents) return;
   const name = r.documents[idx] ? r.documents[idx].name : 'this document';
-  if (!confirm(`Remove "${name}" from this sold record?`)) return;
-  r.documents.splice(idx, 1);
-  saveSold();
-  openSoldDetail(soldId);
-  showToast('Document removed', 'info');
+  armoryConfirm({
+    icon: '📄',
+    title: 'Remove Document',
+    body: `"${name}" will be removed from this sold record.`,
+    confirmLabel: 'REMOVE',
+    danger: true,
+    onConfirm: () => {
+      r.documents.splice(idx, 1);
+      saveSold();
+      openSoldDetail(soldId);
+      showToast('Document removed', 'info');
+    }
+  });
 }
 
 function attachSoldDocFiles(event, soldId) {
@@ -5059,29 +5806,45 @@ function attachSoldDocFiles(event, soldId) {
 function deleteSoldRecord(soldId) {
   const r = soldInventory.find(x => x.sold_id === soldId);
   if (!r) return;
-  if (!confirm(`Permanently delete the sold record for ${r.make || ''} ${r.model || ''}? This cannot be undone.`)) return;
-  soldInventory = soldInventory.filter(x => x.sold_id !== soldId);
-  saveSold();
-  closeModal('soldDetailModal');
-  renderSold();
-  showToast('Sold record deleted', 'info');
+  armoryConfirm({
+    icon: '🗑',
+    title: 'Delete Sold Record',
+    body: `The sold record for ${r.make || ''} ${r.model || ''} will be permanently deleted. This cannot be undone.`,
+    confirmLabel: 'DELETE',
+    danger: true,
+    onConfirm: () => {
+      soldInventory = soldInventory.filter(x => x.sold_id !== soldId);
+      saveSold();
+      closeModal('soldDetailModal');
+      renderSold();
+      showToast('Sold record deleted', 'info');
+    }
+  });
 }
 
 function restoreFromSold(soldId) {
   const r = soldInventory.find(x => x.sold_id === soldId);
   if (!r) return;
-  if (!confirm(`Restore ${r.make || ''} ${r.model || ''} back to active inventory?`)) return;
-  const restored = { ...r };
-  delete restored.sold_id; delete restored.sale_price; delete restored.sale_date;
-  delete restored.buyer_name; delete restored.payment_method; delete restored.sale_notes; delete restored.archived_at;
-  inventory.push({ id: r.id || uid(), ...restored });
-  save();
-  soldInventory = soldInventory.filter(x => x.sold_id !== soldId);
-  saveSold();
-  closeModal('soldDetailModal');
-  renderSold();
-  renderInventory();
-  showToast('✓ Restored to inventory', 'success');
+  armoryConfirm({
+    icon: '↩',
+    title: 'Restore to Inventory',
+    body: `${r.make || ''} ${r.model || ''} will be moved back to your active vault.`,
+    confirmLabel: 'RESTORE',
+    danger: false,
+    onConfirm: () => {
+      const restored = { ...r };
+      delete restored.sold_id; delete restored.sale_price; delete restored.sale_date;
+      delete restored.buyer_name; delete restored.payment_method; delete restored.sale_notes; delete restored.archived_at;
+      inventory.push({ id: r.id || uid(), ...restored });
+      save();
+      soldInventory = soldInventory.filter(x => x.sold_id !== soldId);
+      saveSold();
+      closeModal('soldDetailModal');
+      renderSold();
+      renderInventory();
+      showToast('✓ Restored to inventory', 'success');
+    }
+  });
 }
 
 function saveBOSToRecord(id) {
@@ -5701,6 +6464,17 @@ function initTheme() {
 // ── Init — runs after DOM is fully parsed (script is at bottom of file) ──
 document.addEventListener('DOMContentLoaded', function() {
   initTheme();
+
+  // Wire confirm overlay dismiss
+  const confirmOverlay = document.getElementById('armoryConfirmOverlay');
+  if (confirmOverlay) {
+    confirmOverlay.addEventListener('click', e => {
+      if (e.target === confirmOverlay) armoryConfirmCancel();
+    });
+  }
+
+  // Wire long-press multi-select
+  initLongPress();
   const sp = document.getElementById('armory-splash');
   if (sp) {
     // Returning user: auto-dismiss after 2s
@@ -5774,6 +6548,98 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="btn btn-primary" onclick="closeArmoryOv('armory-story')">⬡ BACK TO ARMORY</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     THEMED CONFIRM / ALERT MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div id="armoryConfirmOverlay">
+  <div class="armory-confirm-card">
+    <div class="armory-confirm-header">
+      <div class="armory-confirm-icon" id="acIcon">⚠️</div>
+      <div class="armory-confirm-title" id="acTitle">Confirm</div>
+    </div>
+    <div class="armory-confirm-body" id="acBody"></div>
+    <div class="armory-confirm-actions">
+      <button id="acCancel" onclick="armoryConfirmCancel()">Cancel</button>
+      <button id="acConfirm" onclick="armoryConfirmOk()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MULTI-SELECT ACTION BAR
+     ═══════════════════════════════════════════════════════════ -->
+<div class="select-mode-bar" id="selectModeBar">
+  <span class="sel-count" id="selCount">0 SELECTED</span>
+  <button class="btn btn-sm" onclick="selectAll()" style="flex-shrink:0">SELECT ALL</button>
+  <button class="btn btn-sm btn-primary" id="shareSelectedBtn" onclick="openVaultShareModal()" style="flex-shrink:0" disabled>⬡ SHARE</button>
+  <button class="btn btn-sm" onclick="exitSelectMode()" style="flex-shrink:0">CANCEL</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SHARE / EXPORT MODAL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="shareModal" onclick="if(event.target===this)closeModal('shareModal')">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <span class="modal-title" id="shareModalTitle">⬡ EXPORT FIREARM CARD</span>
+      <button class="modal-close" onclick="closeModal('shareModal')">✕</button>
+    </div>
+    <div class="share-modal-body">
+
+      <!-- Detail-mode options (single firearm) -->
+      <div id="shareDetailOptions">
+        <div style="font-family:var(--font);font-size:10px;letter-spacing:2px;color:var(--text-dim);margin-bottom:12px">INCLUDE IN CARD</div>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-photo" checked>
+          <div><div class="share-option-label">Photo</div><div class="share-option-sub">Primary firearm image</div></div>
+        </label>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-specs" checked>
+          <div><div class="share-option-label">Specifications</div><div class="share-option-sub">Caliber, action, barrel, weight, value…</div></div>
+        </label>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-desc">
+          <div><div class="share-option-label">AI Description</div><div class="share-option-sub">Cached AI summary paragraph</div></div>
+        </label>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-range">
+          <div><div class="share-option-label">Range Log</div><div class="share-option-sub">Total rounds fired &amp; recent sessions</div></div>
+        </label>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-maint">
+          <div><div class="share-option-label">Maintenance Status</div><div class="share-option-sub">Last service date &amp; tasks</div></div>
+        </label>
+        <label class="share-option-row">
+          <input type="checkbox" id="shr-acc">
+          <div><div class="share-option-label">Accessories</div><div class="share-option-sub">Attached optics, lights, suppressors…</div></div>
+        </label>
+      </div>
+
+      <!-- Vault-mode label -->
+      <div id="shareVaultOptions" style="display:none">
+        <div style="font-family:var(--font);font-size:10px;letter-spacing:2px;color:var(--text-dim);margin-bottom:8px">COLLECTION SUMMARY</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.6;">A printable PDF summary of all selected firearms — photo, specs, and value for each piece.</div>
+      </div>
+
+      <!-- Style picker -->
+      <div style="font-family:var(--font);font-size:10px;letter-spacing:2px;color:var(--text-dim);margin:20px 0 10px">THEME</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm share-style-btn active" data-style="dark" onclick="setShareStyle('dark')">⬛ DARK</button>
+        <button class="btn btn-sm share-style-btn" data-style="light" onclick="setShareStyle('light')">□ LIGHT</button>
+      </div>
+
+      <div style="margin-top:16px;padding:12px 14px;background:var(--accent-soft);border:0.5px solid var(--accent-border);border-radius:var(--radius-sm)">
+        <div style="font-size:12px;color:var(--accent);font-weight:600;margin-bottom:4px">📄 Opens as print dialog</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5">A styled PDF card will open in a new tab — use your browser's Save as PDF to download or share.</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:8px">
+      <button class="btn" onclick="closeModal('shareModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="generateSharePDF()">⬡ GENERATE &amp; EXPORT</button>
+    </div>
   </div>
 </div>
 
