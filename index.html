@@ -5080,35 +5080,49 @@ function openVaultShareModal() {
 }
 
 function generateSharePDF() {
+  // Read all checkbox states BEFORE closing the modal — closing can affect DOM
+  const opts = {
+    photo: document.getElementById('shr-photo').checked,
+    specs: document.getElementById('shr-specs').checked,
+    desc:  document.getElementById('shr-desc').checked,
+    range: document.getElementById('shr-range').checked,
+    maint: document.getElementById('shr-maint').checked,
+    acc:   document.getElementById('shr-acc').checked,
+    style: _shareStyle,
+    mode:  _shareMode,
+    gunId: _shareGunId,
+    ids:   [..._selectedIds],
+  };
   closeModal('shareModal');
-  if (_shareMode === 'detail') {
-    exportFirearmCard(_shareGunId);
+  if (opts.mode === 'detail') {
+    exportFirearmCard(opts.gunId, opts);
   } else {
-    exportVaultCard([..._selectedIds]);
+    exportVaultCard(opts.ids, opts);
   }
 }
 
 // ── SINGLE FIREARM CARD PDF ──
-function exportFirearmCard(id) {
+function exportFirearmCard(id, opts) {
   const g = inventory.find(x => x.id === id);
   if (!g) return;
 
-  const dark  = _shareStyle === 'dark';
-  const BG    = dark ? '#0A0A0C' : '#F2F2F7';
-  const CARD  = dark ? '#1C1C1E' : '#FFFFFF';
-  const TEXT  = dark ? '#FFFFFF' : '#1C1C1E';
-  const SUB   = dark ? 'rgba(235,235,245,0.55)' : 'rgba(60,60,67,0.55)';
-  const GOLD  = '#C8A84B';
-  const BORD  = dark ? 'rgba(84,84,88,0.5)' : 'rgba(60,60,67,0.15)';
-  const CHIP  = dark ? '#2C2C2E' : '#E5E5EA';
+  const dark = (opts.style || _shareStyle) === 'dark';
+  const BG   = dark ? '#0A0A0C' : '#F2F2F7';
+  const CARD = dark ? '#1C1C1E' : '#FFFFFF';
+  const TEXT = dark ? '#FFFFFF' : '#1C1C1E';
+  const SUB  = dark ? 'rgba(235,235,245,0.55)' : 'rgba(60,60,67,0.55)';
+  const GOLD = '#C8A84B';
+  const BORD = dark ? 'rgba(84,84,88,0.5)' : 'rgba(60,60,67,0.15)';
+  const CHIP = dark ? '#2C2C2E' : '#E5E5EA';
 
-  const inclPhoto = document.getElementById('shr-photo').checked;
-  const inclSpecs = document.getElementById('shr-specs').checked;
-  const inclDesc  = document.getElementById('shr-desc').checked;
-  const inclRange = document.getElementById('shr-range').checked;
-  const inclMaint = document.getElementById('shr-maint').checked;
-  const inclAcc   = document.getElementById('shr-acc').checked;
+  const inclPhoto = opts.photo;
+  const inclSpecs = opts.specs;
+  const inclDesc  = opts.desc;
+  const inclRange = opts.range;
+  const inclMaint = opts.maint;
+  const inclAcc   = opts.acc;
 
+  // ── SPECS ──
   const specs = inclSpecs ? [
     ['TYPE',      g.type],
     ['CALIBER',   g.caliber],
@@ -5124,41 +5138,65 @@ function exportFirearmCard(id) {
     ['VALUE',     g.value ? '$' + Number(g.value).toLocaleString() : ''],
     ['PURCHASED', g.purchase_date],
     ['STORAGE',   g.storage_location],
-  ].filter(([,v]) => v) : [];
+  ].filter(([, v]) => v) : [];
 
   const specsHtml = specs.length ? `
     <table class="spec-table">
-      ${specs.map(([l,v]) => `<tr><td class="spec-label">${l}</td><td class="spec-val">${v}</td></tr>`).join('')}
+      ${specs.map(([l, v]) => `<tr><td class="spec-label">${l}</td><td class="spec-val">${v}</td></tr>`).join('')}
     </table>` : '';
 
+  // ── AI DESCRIPTION ──
   const descHtml = (inclDesc && g.ai_description) ? `
     <div class="section">
       <div class="section-title">AI DESCRIPTION</div>
       <div class="desc-text">${g.ai_description.replace(/\n\n/g, '</p><p>').replace(/^/, '<p>').replace(/$/, '</p>')}</div>
     </div>` : '';
 
+  // ── RANGE LOG — include whenever checked, even if total is 0 ──
   const rr = g.range_rounds || {};
+  const sessions = (rr.sessions || []).slice(-5).reverse();
+  const rangeHtml = inclRange ? `
+    <div class="section">
+      <div class="section-title">RANGE LOG</div>
+      <div class="chip-row">
+        <span class="chip">🎯 ${Number(rr.total || 0).toLocaleString()} ROUNDS FIRED</span>
+      </div>
+      ${sessions.length ? `
+        <table class="spec-table" style="margin-bottom:0">
+          ${sessions.map(s => `<tr><td class="spec-label">${s.date || ''}</td><td class="spec-val">${Number(s.rounds || 0).toLocaleString()} rds${s.note ? ' — ' + s.note : ''}</td></tr>`).join('')}
+        </table>` : '<div style="font-size:12px;color:' + SUB + '">No sessions logged yet.</div>'}
+    </div>` : '';
+
+  // ── MAINTENANCE — include whenever checked ──
   const maint = g.maintenance || {};
-  const acc   = g.accessories || {};
-
-  const rangeHtml = (inclRange && rr.total) ? `
-    <div class="chip-row">
-      <span class="chip">🎯 ${Number(rr.total).toLocaleString()} ROUNDS FIRED</span>
-      ${(rr.sessions || []).slice(-3).reverse().map(s => `<span class="chip-sub">${s.date} — ${s.rounds} rds</span>`).join('')}
+  const maintTasks = Object.entries(maint.tasks || {}).filter(([, v]) => v).map(([k]) => k.replace(/_/g, ' '));
+  const maintHtml = inclMaint ? `
+    <div class="section">
+      <div class="section-title">MAINTENANCE</div>
+      ${maint.last_service ? `<div class="chip-row"><span class="chip">🔧 LAST SERVICE: ${maint.last_service}</span></div>` : ''}
+      ${maintTasks.length ? `<div class="chip-row">${maintTasks.map(t => `<span class="chip-sub">${t.toUpperCase()}</span>`).join('')}</div>` : ''}
+      ${maint.notes ? `<div style="font-size:12px;color:${SUB};margin-top:6px">${maint.notes}</div>` : ''}
+      ${!maint.last_service && !maintTasks.length && !maint.notes ? `<div style="font-size:12px;color:${SUB}">No maintenance recorded yet.</div>` : ''}
     </div>` : '';
 
-  const maintHtml = (inclMaint && (maint.last_service || Object.values(maint.tasks||{}).some(Boolean))) ? `
-    <div class="chip-row">
-      ${maint.last_service ? `<span class="chip">🔧 LAST SERVICE: ${maint.last_service}</span>` : ''}
-      ${Object.entries(maint.tasks||{}).filter(([,v])=>v).map(([k])=>`<span class="chip-sub">${k.replace(/_/g,' ')}</span>`).join('')}
+  // ── ACCESSORIES — include whenever checked ──
+  const acc = g.accessories || {};
+  const accNames = Object.entries(acc)
+    .filter(([k, v]) => v && k !== 'custom')
+    .map(([k]) => k.replace(/_/g, ' ').toUpperCase());
+  const accHtml = inclAcc ? `
+    <div class="section">
+      <div class="section-title">ACCESSORIES</div>
+      ${accNames.length ? `<div class="chip-row">${accNames.map(a => `<span class="chip-sub">⚙ ${a}</span>`).join('')}</div>` : ''}
+      ${acc.custom ? `<div style="font-size:12px;color:${SUB};margin-top:6px">${acc.custom}</div>` : ''}
+      ${!accNames.length && !acc.custom ? `<div style="font-size:12px;color:${SUB}">No accessories recorded yet.</div>` : ''}
     </div>` : '';
 
-  const accNames = Object.entries(acc).filter(([k,v])=>v&&k!=='custom').map(([k])=>k.replace(/_/g,' ').toUpperCase());
-  const accHtml = (inclAcc && (accNames.length || acc.custom)) ? `
-    <div class="chip-row">
-      <span class="chip">⚙ ACCESSORIES</span>
-      ${accNames.map(a=>`<span class="chip-sub">${a}</span>`).join('')}
-      ${acc.custom ? `<span class="chip-sub">${acc.custom}</span>` : ''}
+  // ── NOTES ──
+  const notesHtml = (g.notes && !inclDesc) ? `
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div class="desc-text">${g.notes}</div>
     </div>` : '';
 
   const html = `<!DOCTYPE html>
@@ -5172,26 +5210,26 @@ function exportFirearmCard(id) {
   .header-left .brand { font-size:11px; font-weight:600; color:${GOLD}; letter-spacing:2px; margin-bottom:6px; }
   .header-left .model { font-size:28px; font-weight:800; color:${TEXT}; letter-spacing:-0.5px; line-height:1.1; }
   .header-right { text-align:right; flex-shrink:0; }
-  .type-badge { display:inline-block; background:${dark?'rgba(200,168,75,0.15)':'rgba(200,168,75,0.12)'}; border:1px solid rgba(200,168,75,0.35); color:${GOLD}; font-size:10px; font-weight:700; letter-spacing:1.5px; padding:4px 12px; border-radius:20px; }
+  .type-badge { display:inline-block; background:${dark ? 'rgba(200,168,75,0.15)' : 'rgba(200,168,75,0.12)'}; border:1px solid rgba(200,168,75,0.35); color:${GOLD}; font-size:10px; font-weight:700; letter-spacing:1.5px; padding:4px 12px; border-radius:20px; }
   .armory-logo { font-size:10px; color:${SUB}; letter-spacing:1px; margin-top:8px; }
   .photo { width:100%; height:300px; object-fit:cover; display:block; }
-  .photo-placeholder { width:100%; height:200px; background:${dark?'#111':'#f0f0f0'}; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:0.2; }
+  .photo-placeholder { width:100%; height:160px; background:${dark ? '#111' : '#f0f0f0'}; display:flex; align-items:center; justify-content:center; font-size:64px; opacity:0.2; }
   .body { padding:24px 28px; }
   .spec-table { width:100%; border-collapse:collapse; margin-bottom:20px; }
   .spec-label { font-size:9px; font-weight:700; letter-spacing:1.5px; color:${GOLD}; padding:9px 16px 9px 0; border-bottom:1px solid ${BORD}; width:36%; vertical-align:top; }
   .spec-val   { font-size:13px; font-weight:600; color:${TEXT}; padding:9px 0; border-bottom:1px solid ${BORD}; vertical-align:top; }
-  .section { margin-bottom:20px; }
-  .section-title { font-size:9px; font-weight:700; letter-spacing:2px; color:${GOLD}; margin-bottom:10px; }
+  .section { margin-bottom:24px; }
+  .section-title { font-size:9px; font-weight:700; letter-spacing:2px; color:${GOLD}; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid ${BORD}; }
   .desc-text { font-size:13px; color:${SUB}; line-height:1.75; }
   .desc-text p { margin-bottom:10px; }
-  .chip-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:14px; }
+  .chip-row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
   .chip { background:${CHIP}; border:1px solid ${BORD}; color:${TEXT}; font-size:11px; font-weight:700; padding:5px 12px; border-radius:20px; letter-spacing:0.3px; }
   .chip-sub { background:transparent; border:1px solid ${BORD}; color:${SUB}; font-size:10px; padding:4px 10px; border-radius:20px; }
   .footer { padding:14px 28px; border-top:1px solid ${BORD}; display:flex; justify-content:space-between; align-items:center; }
   .footer-logo { font-size:10px; font-weight:700; color:${GOLD}; letter-spacing:2px; }
   .footer-date { font-size:10px; color:${SUB}; }
   @media print {
-    body { padding:0; background:${BG}; }
+    body { padding:0; background:${BG}; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .card { border-radius:0; box-shadow:none; max-width:100%; }
   }
 </style></head><body>
@@ -5213,7 +5251,7 @@ function exportFirearmCard(id) {
     ${rangeHtml}
     ${maintHtml}
     ${accHtml}
-    ${g.notes && !inclDesc ? `<div class="section"><div class="section-title">NOTES</div><div class="desc-text">${g.notes}</div></div>` : ''}
+    ${notesHtml}
   </div>
   <div class="footer">
     <div class="footer-logo">LAZLAB CREATIONS · ARMORY</div>
@@ -5231,11 +5269,11 @@ function exportFirearmCard(id) {
 }
 
 // ── VAULT COLLECTION PDF ──
-function exportVaultCard(ids) {
+function exportVaultCard(ids, opts) {
   const guns = ids.map(id => inventory.find(x => x.id === id)).filter(Boolean);
   if (!guns.length) return;
 
-  const dark = _shareStyle === 'dark';
+  const dark = ((opts && opts.style) || _shareStyle) === 'dark';
   const BG   = dark ? '#0A0A0C' : '#F2F2F7';
   const CARD = dark ? '#1C1C1E' : '#FFFFFF';
   const TEXT = dark ? '#FFFFFF' : '#1C1C1E';
